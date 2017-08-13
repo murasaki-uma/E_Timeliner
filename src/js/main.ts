@@ -1,7 +1,7 @@
 declare function require(x: string): any;
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
-
+import * as Math from "mathjs";
 // console.log(SVG);
 
 class Main
@@ -38,7 +38,6 @@ class Main
 
     public framePerPixel:number = 0;
     public durationFrameNums:number;
-
     public preHour:number = 0;
     public preMin:number = 0;
     public preSec:number=0;
@@ -342,21 +341,28 @@ class Main
                     this.preFrame = time;
                 }
             }
+
+            let dTime = (this.nowTime - this.startTime)/1000;
             this.nowTime = new Date().getTime();
-            console.log((this.nowTime - this.startTime)/1000);
+            console.log(dTime);
             let per = this.audioContext.currentTime / this.audioBuffers[0].duration;
-            console.log(per);
+            // console.log(per);
             this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
 
             this.preSec = new Date().getSeconds();
 
 
         // this.timeToDom();
-            $('.timeline_s').text(Math.floor((this.nowTime - this.startTime)/1000));
+            $('.timeline_s').text(Math.floor(dTime));
             // $('.timeline_f').text(new Date().)
             // console.log(this.audioContext.currentTime)\
+            // Math.fraction()
 
+            let mill = dTime - Math.floor(dTime);
+            console.log(mill);
+            $('.timeline_f').text(Math.floor(mill * 60));
             requestAnimationFrame(this.update);
+
         }
     }
 }
