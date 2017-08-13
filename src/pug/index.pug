@@ -5,12 +5,38 @@ html
         include ./parts/head
 
     body
+        .contoller
+            .duration
+                .h
+                    input#hour(type="number", value="0")
+                    p hours
+                p :
+                .m
+                    input#minuts(type="number", value="4")
+                    p mins
+                p :
+                .s
+                    input#sec(type="number", value="10")
+                    p secs
+                p :
+                .f
+                    input#frame(type="number", value="30")
+                    p frames
+            .timeline_time
+                p.timeline_h 00
+                p :
+                p.timeline_m 00
+                p :
+                p.timeline_s 00
+                p :
+                p.timeline_f 00
+
+            input#playButton(type="button", value="play")
+            input#stopButton(type="button", value="stop")
+            input#volume(type="range", value="-50",max="0", min="-100")
+        #timeline
         #drawing
-        //p.button(onclick="play()") play
-        //p.button(onclick="stop()") stop
-        //p Volume
-        //input#volume(type="range", value="50", onChange="volumeChange()")
-        canvas
+        //canvas
 
 
 

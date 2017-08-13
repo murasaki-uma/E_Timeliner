@@ -15462,8 +15462,85 @@ var Main = (function () {
     function Main() {
         var _this = this;
         this.audioBuffers = [];
+        this.startTime = 0;
+        this.replayTime = 0;
+        this.pauseTime = 0;
+        this.timelineWidth = window.innerWidth * 0.9;
+        this.timelineHeight = 100;
+        this.lineWidth = 2;
+        this.isPlay = false;
+        this.audioScale = { x: 1, y: 1.0 };
+        this.fps = 60;
+        this.framePerPixel = 0;
+        this.preHour = 0;
+        this.preMin = 0;
+        this.preSec = 0;
+        this.preFrame = 0;
+        this.play = function () {
+            _this.preFrame = 0;
+            _this.startTime = new Date().getTime();
+            _this.nowTime = new Date().getTime();
+            // this.resetTime();
+            _this.isPlay = true;
+            _this.update();
+            //AudioBufferSourceNodeを作成する
+            _this.audioSouce = _this.audioContext.createBufferSource();
+            //bufferプロパティにAudioBufferインスタンスを設定
+            _this.audioSouce.buffer = _this.audioBuffers[0];
+            //ループ
+            _this.audioSouce.loop = false;
+            //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
+            _this.audioSouce.connect(_this.audioContext.destination);
+            //GainNodeを作成する
+            _this.audioGainNode = _this.audioContext.createGain();
+            //sourceをGainNodeへ接続する
+            _this.audioSouce.connect(_this.audioGainNode);
+            //GainNodeをAudioDestinationNodeに接続
+            _this.audioGainNode.connect(_this.audioContext.destination);
+            // this.audioGainNode.gain.value = -0.4;
+            _this.setVolume();
+            // this.audioSouces[0].start = this.audioSouces[0].start || this.audioSouces[0].noteOn;
+            // this.audioSouces[0].stop  = this.audioSouces[0].stop  || this.audioSouces[0].noteOff;
+            //始めからの再生の場合
+            //スタート時間を変数startTimeに格納
+            var startTime = 0;
+            if (__WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').hasClass("pause")) {
+                startTime = _this.pauseTime;
+                __WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').removeClass('pause');
+            }
+            else {
+            }
+            // first_flg = false;
+            // }else{
+            //     //再スタート時間を変数replayTimeに格納
+            //     replayTime = context.currentTime;
+            //     //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
+            //     pausingTime += replayTime - pauseTime;
+            // }
+            //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
+            // var playTime = replayTime - startTime - pausingTime;
+            //再生
+            _this.audioSouce.start(0, startTime);
+            //クラスとテキスト変更
+            // $('.play').removeClass('play').addClass('pause').html('PAUSE');
+        };
+        this.stop = function () {
+            _this.pauseTime = _this.audioContext.currentTime;
+            _this.audioSouce.stop(0);
+            //クラスとテキスト変更
+            _this.isPlay = false;
+            __WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').addClass('pause');
+        };
+        this.setVolume = function () {
+            //range属性のvalue取得
+            var value = document.getElementById("volume").value / 100.0;
+            //gainNodeの値に変更
+            // var volume = ( value / 10 ) - 1;
+            //gainNodeに代入
+            _this.audioGainNode.gain.value = value;
+        };
         this.soundOpen = function (url) {
-            var context = new AudioContext();
+            _this.audioContext = new AudioContext();
             var xhr = new XMLHttpRequest();
             //読み込むデータのURLを書く
             xhr.open('GET', "sound/sample.mp3", true);
@@ -15475,7 +15552,14 @@ var Main = (function () {
                     if (arrayBuffer instanceof ArrayBuffer) {
                         var successCallback = function (audioBuffer) {
                             //AudioBufferインスタンスを変数へ格納
-                            var buffer = audioBuffer;
+                            // let buffer = audioBuffer;
+                            console.log(audioBuffer.duration);
+                            _this.draw.size(audioBuffer.duration * 60 * _this.audioScale.x, 100);
+                            // this.draw.scale(1.0,1.0);
+                            _this.audioBuffers.push(audioBuffer);
+                            var source = _this.audioContext.createBufferSource();
+                            source.buffer = audioBuffer;
+                            // this.audioSouces.push(source);
                             var channelLs = new Float32Array(audioBuffer.length);
                             //オーディオデータのチャンネル数が０以上のとき
                             if (audioBuffer.numberOfChannels > 0) {
@@ -15487,62 +15571,130 @@ var Main = (function () {
                             // //canvasをクリアにする
                             // canvasContext.clearRect(0, 0, canvas.width, canvas.height);
                             //10ミリ秒
-                            var n10msec = Math.floor(10 * Math.pow(10, -3) * context.sampleRate);
-                            var count = 0;
-                            for (var i = 0, len = channelLs.length; i < len; i++) {
-                                if ((i % n10msec) === 0) {
-                                    count++;
-                                }
-                            }
-                            var _count = 0;
-                            var _widht = _this.draw.width() / count;
-                            console.log(_widht);
+                            var n10msec = Math.floor(10 * Math.pow(10, -3) * _this.audioContext.sampleRate);
+                            //
+                            // let count = 0;
+                            // for (var i = 0, len = channelLs.length; i < len; i++) {
+                            //     if ((i % n10msec) === 0) {
+                            //         count ++;
+                            //     }
+                            // }
+                            //
+                            // let _count = 0;
+                            // let _widht = this.draw.width()/count;
+                            // console.log(_widht);
                             for (var i = 0, len = channelLs.length; i < len; i++) {
                                 //10ミリ秒ごとに描画
                                 if ((i % n10msec) === 0) {
                                     // console.log("count: " + _count + "  " + "c: " + channelLs[i]);
                                     var adj_h = _this.draw.height() * 0.1;
-                                    var h = ((1 - channelLs[i]) / 2) * (_this.draw.height()) - _this.draw.height() / 2;
+                                    var h = ((1 + channelLs[i]) / 2) * (_this.draw.height()) - _this.draw.height() / 2;
+                                    if (h < 0) {
+                                        h = 0;
+                                    }
                                     var x = (i / len) * _this.draw.width();
                                     // console.log(c);
                                     var y = _this.draw.height() / 2;
                                     y -= h / 2;
                                     var rect = _this.draw.rect(1, h).move(x, y).fill('#f06');
-                                    _count++;
+                                    // _count++;
                                 }
-                                // if ((i % n10msec) === 0) {
-                                //     var x = (i / len) * canvas.width;
-                                //     var y = ((1 - channelLs[i]) / 2) * (canvas.height - 20) + 20;
-                                //     if (i === 0) {
-                                //         //canvasの描画初期位置
-                                //         canvasContext.moveTo(x, y);
-                                //     } else {
-                                //         canvasContext.lineTo(x, y);
-                                //     }
-                                // }
                             }
                             // canvasContext.stroke();
                             //曲の秒数
-                            var soundtime = Math.floor(audioBuffer.length / context.sampleRate);
+                            var soundtime = Math.floor(audioBuffer.length / _this.audioContext.sampleRate);
                         };
                         var errorCallback = function () {
                             window.alert('読み込みに失敗しました');
                         };
-                        context.decodeAudioData(arrayBuffer, successCallback, errorCallback);
+                        _this.audioContext.decodeAudioData(arrayBuffer, successCallback, errorCallback);
                     }
                 }
             };
             xhr.send(null);
         };
+        this.update = function (time) {
+            if (_this.isPlay) {
+                _this.preFrame++;
+                if (_this.preSec != new Date().getSeconds()) {
+                    if (new Date().getSeconds() == 0) {
+                        _this.preFrame = time;
+                    }
+                }
+                _this.nowTime = new Date().getTime();
+                console.log((_this.nowTime - _this.startTime) / 1000);
+                var per = _this.audioContext.currentTime / _this.audioBuffers[0].duration;
+                console.log(per);
+                _this.playTimeLine.move(_this.timeline.width() * per, _this.lineWidth / 2);
+                _this.preSec = new Date().getSeconds();
+                // this.timeToDom();
+                __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_s').text(Math.floor((_this.nowTime - _this.startTime) / 1000));
+                // $('.timeline_f').text(new Date().)
+                // console.log(this.audioContext.currentTime)\
+                requestAnimationFrame(_this.update);
+            }
+        };
         console.log("hello!");
         this.init();
     }
     Main.prototype.init = function () {
-        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, 300);
-        // let rect = this.draw.rect(100, 100);
+        var _this = this;
+        this.timeline = __WEBPACK_IMPORTED_MODULE_0_svg_js__('timeline').size(this.timelineWidth, this.timelineHeight);
+        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, 100);
+        // let rect = this.timeline.rect(100,100).fill('#f06');
+        // let p0_x = this.lineWidth
+        var polyline = this.timeline.polyline([
+            this.lineWidth / 2, this.lineWidth / 2,
+            this.lineWidth / 2, this.timelineHeight - this.lineWidth / 2,
+            this.timelineWidth - this.lineWidth / 2, this.timelineHeight - this.lineWidth / 2,
+            this.timelineWidth - this.lineWidth / 2, this.lineWidth / 2,
+            this.lineWidth / 2, this.lineWidth / 2
+        ]);
+        polyline.fill('none');
+        polyline.stroke({ color: '#616161', width: this.lineWidth });
+        this.playTimeLine = this.timeline.rect(this.lineWidth, this.timelineHeight - this.lineWidth).move(1, this.lineWidth / 2).fill('#616161');
+        this.selectedLine = this.timeline.rect(this.lineWidth, this.timelineHeight - this.lineWidth).move(1, this.lineWidth / 2).fill('#f06');
         this.xhr = new XMLHttpRequest();
         this.audioContext = new AudioContext();
+        this.duration_h = __WEBPACK_IMPORTED_MODULE_1_jquery__('#hour');
+        this.duration_m = __WEBPACK_IMPORTED_MODULE_1_jquery__('#mins');
+        this.duration_s = __WEBPACK_IMPORTED_MODULE_1_jquery__('#secs');
+        this.duration_f = __WEBPACK_IMPORTED_MODULE_1_jquery__('#frames');
+        this.calDuration();
         this.soundOpen("sound/sample.mp3");
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#playButton").on('click', this.play);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#stopButton").on('click', this.stop);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#volume").on('input', this.setVolume);
+        this.svg_timeline = document.querySelector('#' + this.timeline.id());
+        this.svg_timeline.addEventListener('mousemove', function (evt) {
+            var loc = _this.getCursor(evt);
+            _this.selectedLine.move(loc.x + _this.lineWidth / 2, _this.lineWidth / 2);
+            console.log(loc);
+            // Use loc.x and loc.y here
+        }, false);
+        this.update();
+    };
+    Main.prototype.calDuration = function () {
+        this.durationFrameNums = this.duration_f + this.duration_s * this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
+        this.framePerPixel = this.durationFrameNums / this.timeline.width();
+    };
+    Main.prototype.reseize = function () {
+        this.audioScale.x = this.timeline.width();
+    };
+    Main.prototype.getCursor = function (evt) {
+        var pt = this.svg_timeline.createSVGPoint();
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+        return pt.matrixTransform(this.svg_timeline.getScreenCTM().inverse());
+    };
+    Main.prototype.timeToDom = function () {
+        __WEBPACK_IMPORTED_MODULE_1_jquery__(".timeline_f").text(this.preFrame);
+    };
+    Main.prototype.resetTime = function () {
+        this.preHour = new Date().getHours();
+        this.preMin = new Date().getMinutes();
+        this.preSec = new Date().getSeconds();
+        this.preFrame = 0;
     };
     return Main;
 }());
