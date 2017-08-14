@@ -59,6 +59,10 @@ class Main
     public isPlayFirst:boolean = true;
     public isPause:boolean = false;
 
+    public mousePosOnTimeline:any = {x:0,y:0};
+
+    public oscFrags:SVG.Rect[] = [];
+
     constructor()
     {
         console.log("hello!");
@@ -115,16 +119,46 @@ class Main
 
         this.svg_timeline.addEventListener('mousemove',(evt)=>{
             var loc= this.getCursor(evt);
+            this.mousePosOnTimeline.x = loc.x;
+            this.mousePosOnTimeline.y = loc.y;
             this.selectedLine.move(loc.x+this.lineWidth/2,this.lineWidth/2);
             console.log(loc);
             // Use loc.x and loc.y here
         },false);
+
+        this.svg_timeline.addEventListener('mouseup',this.addOsc,false);
 
 
 
         this.update();
 
         $(".durationValues").on('input',this.onDurationChange);
+    }
+
+    public addOsc =(evt)=>
+    {
+
+        console.log("onMouseUp");
+        console.log(evt);
+        if(evt.button == 0)
+        {
+            let frag = this.timeline.rect(this.lineWidth, this.timelineHeight-this.lineWidth).move(this.mousePosOnTimeline.x+this.lineWidth/2,this.lineWidth/2);
+            console.log(frag);
+            this.oscFrags.push(frag);
+        }
+
+        if(evt.button == 1)
+        {
+            for(let i = 0; i < this.oscFrags.length; i++)
+            {
+                if(this.oscFrags[i].x() > this.mousePosOnTimeline.x - this.lineWidth/2 && this.oscFrags[i].x() < this.mousePosOnTimeline.x + this.lineWidth/2)
+                {
+                    this.oscFrags[i].remove();
+                }
+            }
+        }
+
+
     }
 
     public calDuration()
@@ -411,7 +445,8 @@ class Main
             $('.timeline_h').text(h);
 
 
-            let per = (dTime*60) / this.durationFrameNums;
+
+            let per = ((this.playingTime+dTime)*60) / this.durationFrameNums;
             this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
 
         }

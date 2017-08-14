@@ -74534,6 +74534,24 @@ var Main = (function () {
         // public time_update:number;
         this.isPlayFirst = true;
         this.isPause = false;
+        this.mousePosOnTimeline = { x: 0, y: 0 };
+        this.oscFrags = [];
+        this.addOsc = function (evt) {
+            console.log("onMouseUp");
+            console.log(evt);
+            if (evt.button == 0) {
+                var frag = _this.timeline.rect(_this.lineWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x + _this.lineWidth / 2, _this.lineWidth / 2);
+                console.log(frag);
+                _this.oscFrags.push(frag);
+            }
+            if (evt.button == 1) {
+                for (var i = 0; i < _this.oscFrags.length; i++) {
+                    if (_this.oscFrags[i].x() > _this.mousePosOnTimeline.x - _this.lineWidth / 2 && _this.oscFrags[i].x() < _this.mousePosOnTimeline.x + _this.lineWidth / 2) {
+                        _this.oscFrags[i].remove();
+                    }
+                }
+            }
+        };
         this.onDurationChange = function () {
             _this.calDuration();
         };
@@ -74702,7 +74720,7 @@ var Main = (function () {
                 var h = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((_this.playingTime + dTime) / 3600);
                 ;
                 __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_h').text(h);
-                var per = (dTime * 60) / _this.durationFrameNums;
+                var per = ((_this.playingTime + dTime) * 60) / _this.durationFrameNums;
                 _this.playTimeLine.move(_this.timeline.width() * per, _this.lineWidth / 2);
             }
             requestAnimationFrame(_this.update);
@@ -74742,10 +74760,13 @@ var Main = (function () {
         this.svg_timeline = document.querySelector('#' + this.timeline.id());
         this.svg_timeline.addEventListener('mousemove', function (evt) {
             var loc = _this.getCursor(evt);
+            _this.mousePosOnTimeline.x = loc.x;
+            _this.mousePosOnTimeline.y = loc.y;
             _this.selectedLine.move(loc.x + _this.lineWidth / 2, _this.lineWidth / 2);
             console.log(loc);
             // Use loc.x and loc.y here
         }, false);
+        this.svg_timeline.addEventListener('mouseup', this.addOsc, false);
         this.update();
         __WEBPACK_IMPORTED_MODULE_1_jquery__(".durationValues").on('input', this.onDurationChange);
     };
