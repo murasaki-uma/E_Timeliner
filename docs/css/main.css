@@ -126,6 +126,12 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Yu Gothic", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+}
+body {
+  padding: 10px;
+}
 .main_nav,
 .contoller {
   margin: 10px 0;
@@ -138,13 +144,46 @@ table {
 }
 .timelines {
   position: relative;
+  height: 350px;
 }
 .timelines #timeline,
 .timelines #timelineScale {
   position: absolute;
 }
+.editFragValue {
+  display: flex;
+}
+.flagValueDebug,
+p {
+  font-size: 24px;
+  margin: 10px 0;
+}
+.flagValueDebug {
+  background: #000;
+  color: #fff;
+  width: 600px;
+  height: 300px;
+}
 .inputFlagValue {
+  margin-right: 40px;
+}
+.inputFlagValue,
+#sendingFrames {
   height: 50px;
   width: 300px;
   font-size: 24px;
+  background-color: #8a8a8a;
+  margin: 0 10px;
+  margin-left: 0;
+}
+#sendingFrames {
+  width: 150px;
+  margin: 0 10px;
+}
+.edit {
+  color: #000;
+  background-color: #00bfff !important;
+}
+.hide {
+  display: none;
 }

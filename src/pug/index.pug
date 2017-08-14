@@ -39,8 +39,12 @@ html
             #timeline
             #drawing
         .editFragValue
-            p.flagValueDebug
             input.inputFlagValue(type="text", value='{"name":"value"}')
+            p time
+            input#sendingFrames(type="number", value="30")
+            p frame
+        .debugLog
+            p.flagValueDebug {"name":"value"}
         //canvas
 
 

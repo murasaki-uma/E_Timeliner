@@ -74503,30 +74503,42 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 // console.log(SVG);
 var FlagValues = (function () {
-    function FlagValues(frag) {
+    function FlagValues(frag, time, pixelPerFrame) {
         var _this = this;
         this.values = { name: "value" };
         this.isSelected = false;
+        this.sendingOscTime = 30;
+        this.time = 0;
+        this.width = 4;
+        this.pixelPerFrame = 0.1;
         this.select = function () {
             console.log(_this.frag.id());
             _this.isSelected = true;
             _this.frag.stroke({
                 color: '#0d47a1',
                 opacity: 1.0,
-                width: 1
+                width: 2
             });
             __WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").val(JSON.stringify(_this.values));
+            __WEBPACK_IMPORTED_MODULE_1_jquery__("#sendingFrames").val(_this.sendingOscTime);
         };
         this.diselect = function () {
             _this.isSelected = false;
             _this.frag.stroke({ opacity: 0.0 });
         };
         this.frag = frag;
+        this.time = time;
+        this.pixelPerFrame = pixelPerFrame;
         // this.frag.id()
         // $("#" + this.frag.id()).on('click',this.select());
     }
     FlagValues.prototype.setInputValues = function () {
         this.values = JSON.parse(__WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").val());
+        this.sendingOscTime = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__("#sendingFrames").val());
+        this.frag.width(this.sendingOscTime * this.pixelPerFrame);
+        this.width = this.sendingOscTime * this.pixelPerFrame;
+        // $(".inputFlagValue").addClass("hide");
+        // $(".flagValueDebug").removeClass("hide");
     };
     return FlagValues;
 }());
@@ -74548,6 +74560,7 @@ var Main = (function () {
         this.duration_f = 0;
         this.fps = 60;
         this.framePerPixel = 0;
+        this.pixelPerFrame = 0;
         this.preHour = 0;
         this.preMin = 0;
         this.preSec = 0;
@@ -74565,53 +74578,91 @@ var Main = (function () {
         this.fragWidth = 6;
         this.mousePosOnTimeline = { x: 0, y: 0 };
         this.oscFrags = [];
+        this.isReadyDoubleClick = false;
         this.onFlagEdited = function () {
             for (var i = 0; i < _this.oscFrags.length; i++) {
             }
+        };
+        this.onMouseMove = function (evt) {
+            var loc = _this.getCursor(evt);
+            _this.mousePosOnTimeline.x = loc.x;
+            _this.mousePosOnTimeline.y = loc.y;
+            _this.selectedLine.move(loc.x + _this.lineWidth / 2, _this.lineWidth / 2);
+            console.log(loc);
+            console.log("time: " + _this.mousePosOnTimeline.x * _this.framePerPixel);
+            // Use loc.x and loc.y here
         };
         this.addOsc = function (evt) {
             console.log("onMouseUp");
             console.log(evt);
             if (evt.button == 0) {
+                var selectNum = 0;
                 if (_this.oscFrags.length > 0) {
                     var isCheck = false;
                     for (var i = 0; i < _this.oscFrags.length; i++) {
+                        if (_this.oscFrags[i].isSelected) {
+                            _this.oscFrags[i].setInputValues();
+                        }
                         _this.oscFrags[i].diselect();
-                        if (_this.oscFrags[i].frag.x() + _this.fragWidth > _this.mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= _this.mousePosOnTimeline.x) {
+                        if (_this.oscFrags[i].frag.x() + _this.oscFrags[i].width > _this.mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= _this.mousePosOnTimeline.x) {
                             isCheck = true;
                             _this.oscFrags[i].select();
+                            selectNum++;
+                            __WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").addClass("edit");
+                            __WEBPACK_IMPORTED_MODULE_1_jquery__("#sendingFrames").addClass("edit");
+                            // $(".flagValueDebug").addClass("hide");
                         }
                     }
-                    if (!isCheck) {
+                    if (!isCheck && _this.isReadyDoubleClick) {
                         var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" }).stroke({
                             color: '#0d47a1',
                             opacity: 1.0,
                             width: 0
                         });
                         console.log(frag);
-                        var f = new FlagValues(frag);
+                        var f = new FlagValues(frag, _this.mousePosOnTimeline.x * _this.framePerPixel, _this.pixelPerFrame);
                         _this.oscFrags.push(f);
+                    }
+                    if (selectNum == 0) {
+                        __WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").removeClass("edit");
+                        __WEBPACK_IMPORTED_MODULE_1_jquery__('#sendingFrames').removeClass("edit");
+                        __WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").val("");
+                        __WEBPACK_IMPORTED_MODULE_1_jquery__('#sendingFrames').val("");
+                        // $(".flagValueDebug").removeClass("hide");
                     }
                 }
                 else {
-                    var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" }).stroke({
-                        color: '#0d47a1',
-                        opacity: 1.0,
-                        width: 0
-                    });
-                    console.log(frag);
-                    var f = new FlagValues(frag);
-                    _this.oscFrags.push(f);
+                    if (_this.isReadyDoubleClick) {
+                        var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" }).stroke({
+                            color: '#0d47a1',
+                            opacity: 1.0,
+                            width: 0
+                        });
+                        console.log(frag);
+                        var f = new FlagValues(frag, _this.mousePosOnTimeline.x * _this.framePerPixel, _this.pixelPerFrame);
+                        _this.oscFrags.push(f);
+                    }
                 }
+                _this.isReadyDoubleClick = false;
             }
             if (evt.button == 1) {
                 for (var i = 0; i < _this.oscFrags.length; i++) {
-                    if (_this.oscFrags[i].frag.x() + _this.fragWidth > _this.mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= _this.mousePosOnTimeline.x) {
+                    if (_this.oscFrags[i].frag.x() + _this.oscFrags[i].width > _this.mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= _this.mousePosOnTimeline.x) {
                         _this.oscFrags[i].frag.remove();
                         _this.oscFrags.splice(i, 1);
                     }
                 }
             }
+            // シングルクリックを受理、300ms間だけダブルクリック判定を残す
+            _this.isReadyDoubleClick = true;
+            setTimeout(function () {
+                // ダブルクリックによりclickedフラグがリセットされていない
+                //     -> シングルクリックだった
+                if (_this.isReadyDoubleClick) {
+                    // alert("single click!");
+                }
+                _this.isReadyDoubleClick = false;
+            }, 300);
         };
         this.onDurationChange = function () {
             _this.calDuration();
@@ -74705,8 +74756,9 @@ var Main = (function () {
                             //AudioBufferインスタンスを変数へ格納
                             // let buffer = audioBuffer;
                             console.log(audioBuffer.duration);
-                            _this.draw.size(audioBuffer.duration * 60 / _this.durationFrameNums * _this.timeline.width(), _this.timelineHeight);
+                            _this.draw.size(audioBuffer.duration * 60 / _this.durationFrameNums * _this.timeline.width(), 100);
                             // this.draw.scale(1.0,1.0);
+                            _this.draw.fill("#444");
                             _this.audioBuffers.push(audioBuffer);
                             var source = _this.audioContext.createBufferSource();
                             source.buffer = audioBuffer;
@@ -74770,7 +74822,7 @@ var Main = (function () {
                 _this.preSec = new Date().getSeconds();
                 // this.timeToDom();
                 var mill = dTime - __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](dTime);
-                console.log(dTime);
+                console.log("playingTIme: " + (dTime + _this.playingTime) * 60);
                 var framenum = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](mill * 60);
                 __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_f').text(framenum);
                 var _s = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((_this.playingTime + dTime) % 60);
@@ -74781,16 +74833,31 @@ var Main = (function () {
                 var h = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((_this.playingTime + dTime) / 3600);
                 ;
                 __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_h').text(h);
+                var oscNum = 0;
+                for (var i = 0; i < _this.oscFrags.length; i++) {
+                    var fragtime = _this.oscFrags[i].time;
+                    var fragtime_floored = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](fragtime);
+                    var frameNum = fragtime - fragtime_floored;
+                    if ((_this.playingTime + dTime) * 60 > fragtime && (_this.playingTime + dTime) * 60 < fragtime + _this.oscFrags[i].sendingOscTime) {
+                        __WEBPACK_IMPORTED_MODULE_1_jquery__(".flagValueDebug").text(JSON.stringify(_this.oscFrags[i].values));
+                        oscNum++;
+                    }
+                }
+                if (oscNum == 0) {
+                    __WEBPACK_IMPORTED_MODULE_1_jquery__(".flagValueDebug").text("");
+                }
                 var per = ((_this.playingTime + dTime) * 60) / _this.durationFrameNums;
                 _this.playTimeLine.move(_this.timeline.width() * per, _this.lineWidth / 2);
             }
             requestAnimationFrame(_this.update);
         };
         console.log("hello!");
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#playButton").on('click', this.play);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#stopButton").on('click', this.pause);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#volume").on('input', this.setVolume);
         this.init();
     }
     Main.prototype.init = function () {
-        var _this = this;
         this.timeline = __WEBPACK_IMPORTED_MODULE_0_svg_js__('timeline').size(this.timelineWidth, this.timelineHeight);
         this.timelineScale = __WEBPACK_IMPORTED_MODULE_0_svg_js__('timelineScale').size(this.timelineWidth, this.timelineHeight);
         console.log(__WEBPACK_IMPORTED_MODULE_1_jquery__('#min').val());
@@ -74799,9 +74866,7 @@ var Main = (function () {
         this.duration_s = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#sec').val());
         this.duration_f = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#frame').val());
         this.calDuration();
-        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, this.timelineHeight);
-        // let rect = this.timeline.rect(100,100).fill('#f06');
-        // let p0_x = this.lineWidth
+        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, 100).fill("#f06");
         var polyline = this.timeline.polyline([
             this.lineWidth / 2, this.lineWidth / 2,
             this.lineWidth / 2, this.timelineHeight - this.lineWidth / 2,
@@ -74816,26 +74881,17 @@ var Main = (function () {
         this.xhr = new XMLHttpRequest();
         this.audioContext = new AudioContext();
         this.soundOpen("sound/sample.mp3");
-        __WEBPACK_IMPORTED_MODULE_1_jquery__("#playButton").on('click', this.play);
-        __WEBPACK_IMPORTED_MODULE_1_jquery__("#stopButton").on('click', this.pause);
-        __WEBPACK_IMPORTED_MODULE_1_jquery__("#volume").on('input', this.setVolume);
         this.svg_timeline = document.querySelector('#' + this.timeline.id());
-        this.svg_timeline.addEventListener('mousemove', function (evt) {
-            var loc = _this.getCursor(evt);
-            _this.mousePosOnTimeline.x = loc.x;
-            _this.mousePosOnTimeline.y = loc.y;
-            _this.selectedLine.move(loc.x + _this.lineWidth / 2, _this.lineWidth / 2);
-            console.log(loc);
-            // Use loc.x and loc.y here
-        }, false);
+        this.svg_timeline.addEventListener('mousemove', this.onMouseMove, false);
         this.svg_timeline.addEventListener('mouseup', this.addOsc, false);
-        this.update();
         __WEBPACK_IMPORTED_MODULE_1_jquery__(".durationValues").on('input', this.onDurationChange);
+        this.update();
     };
     Main.prototype.calDuration = function () {
         this.durationFrameNums = this.duration_f + this.duration_s * this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
         console.log(this.durationFrameNums);
-        this.framePerPixel = this.timeline.width() / this.durationFrameNums;
+        this.framePerPixel = this.durationFrameNums / this.timeline.width();
+        this.pixelPerFrame = this.timeline.width() / this.durationFrameNums;
     };
     Main.prototype.onWindowResize = function () {
         // this.audioScale.x = this.timeline.width();

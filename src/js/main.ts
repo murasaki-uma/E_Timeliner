@@ -10,9 +10,17 @@ class FlagValues
     public frag:SVG.Rect;
     public values:any = {name:"value"};
     public isSelected:boolean = false;
-    constructor(frag:SVG.Rect)
+    public sendingOscTime:number = 30;
+    public time:number = 0;
+    public width:number = 4;
+    public pixelPerFrame:number = 0.1;
+
+    constructor(frag:SVG.Rect, time:number, pixelPerFrame:number)
     {
         this.frag = frag;
+        this.time = time;
+        this.pixelPerFrame = pixelPerFrame;
+
         // this.frag.id()
 
         // $("#" + this.frag.id()).on('click',this.select());
@@ -27,9 +35,13 @@ class FlagValues
         this.frag.stroke({
             color: '#0d47a1',
             opacity: 1.0,
-            width: 1
+            width: 2
         });
         $(".inputFlagValue").val(JSON.stringify(this.values));
+        $("#sendingFrames").val(this.sendingOscTime);
+
+
+
     }
 
     public diselect =()=>
@@ -42,7 +54,13 @@ class FlagValues
 
     public setInputValues()
     {
+
         this.values = JSON.parse( $(".inputFlagValue").val());
+        this.sendingOscTime = Number($("#sendingFrames").val());
+        this.frag.width(this.sendingOscTime * this.pixelPerFrame);
+        this.width = this.sendingOscTime * this.pixelPerFrame;
+        // $(".inputFlagValue").addClass("hide");
+        // $(".flagValueDebug").removeClass("hide");
     }
 }
 
@@ -80,6 +98,7 @@ class Main
     public fps:number = 60;
 
     public framePerPixel:number = 0;
+    public pixelPerFrame:number = 0;
     public durationFrameNums:number;
     public preHour:number = 0;
     public preMin:number = 0;
@@ -108,9 +127,18 @@ class Main
 
     public oscFrags:FlagValues[] = [];
 
+    public isReadyDoubleClick:boolean = false;
+
     constructor()
     {
         console.log("hello!");
+
+        $("#playButton").on('click',this.play);
+        $("#stopButton").on('click',this.pause);
+        $("#volume").on('input',this.setVolume);
+
+
+
         this.init();
     }
     public init()
@@ -126,11 +154,8 @@ class Main
         this.duration_f = Number($('#frame').val());
         this.calDuration();
 
-        this.draw = SVG('drawing').size(700, this.timelineHeight);
+        this.draw = SVG('drawing').size(700, 100).fill("#f06");
 
-        // let rect = this.timeline.rect(100,100).fill('#f06');
-
-        // let p0_x = this.lineWidth
         let polyline = this.timeline.polyline
             ([
                 this.lineWidth/2,this.lineWidth/2,
@@ -153,31 +178,20 @@ class Main
 
         this.soundOpen("sound/sample.mp3");
 
-        $("#playButton").on('click',this.play);
-        $("#stopButton").on('click',this.pause);
-        $("#volume").on('input',this.setVolume);
+
 
         this.svg_timeline = document.querySelector('#'+this.timeline.id());
 
 
 
 
-        this.svg_timeline.addEventListener('mousemove',(evt)=>{
-            var loc= this.getCursor(evt);
-            this.mousePosOnTimeline.x = loc.x;
-            this.mousePosOnTimeline.y = loc.y;
-            this.selectedLine.move(loc.x+this.lineWidth/2,this.lineWidth/2);
-            console.log(loc);
-            // Use loc.x and loc.y here
-        },false);
-
+        this.svg_timeline.addEventListener('mousemove',this.onMouseMove,false);
         this.svg_timeline.addEventListener('mouseup',this.addOsc,false);
-
-
+        $(".durationValues").on('input',this.onDurationChange);
 
         this.update();
 
-        $(".durationValues").on('input',this.onDurationChange);
+
     }
 
     public onFlagEdited =()=>
@@ -188,55 +202,102 @@ class Main
         }
     }
 
+    public onMouseMove =(evt)=>
+    {
+        var loc= this.getCursor(evt);
+        this.mousePosOnTimeline.x = loc.x;
+        this.mousePosOnTimeline.y = loc.y;
+        this.selectedLine.move(loc.x+this.lineWidth/2,this.lineWidth/2);
+        console.log(loc);
+        console.log("time: " + this.mousePosOnTimeline.x * this.framePerPixel);
+            // Use loc.x and loc.y here
+    }
+
+
     public addOsc =(evt)=>
     {
 
         console.log("onMouseUp");
         console.log(evt);
+
+
+
+
+
         if(evt.button == 0)
         {
 
-            if(this.oscFrags.length > 0)
+            let selectNum = 0;
+
+            if(this.oscFrags.length > 0 )
             {
 
                 let isCheck = false;
                 for(let i = 0; i < this.oscFrags.length; i++) {
-                    this.oscFrags[i].diselect();
-                    if (this.oscFrags[i].frag.x() + this.fragWidth > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
+                    if(this.oscFrags[i].isSelected)
                     {
+                        this.oscFrags[i].setInputValues();
+                    }
+                    this.oscFrags[i].diselect();
+                    if (this.oscFrags[i].frag.x() + this.oscFrags[i].width > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
+                    {
+
                         isCheck = true;
                         this.oscFrags[i].select();
+                        selectNum ++;
+                        $(".inputFlagValue").addClass("edit");
+                        $("#sendingFrames").addClass("edit");
+
+                        // $(".flagValueDebug").addClass("hide");
                     }
+
+
                 }
-                if(!isCheck)
+                if(!isCheck && this.isReadyDoubleClick)
                 {
                     let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
                         color: '#0d47a1',
                         opacity: 1.0,
                         width: 0
                     });
+
                     console.log(frag);
-                    let f = new FlagValues(frag);
+                    let f = new FlagValues(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
                     this.oscFrags.push(f);
+                }
+
+                if(selectNum == 0)
+                {
+                    $(".inputFlagValue").removeClass("edit");
+                    $('#sendingFrames').removeClass("edit");
+                    $(".inputFlagValue").val("");
+                    $('#sendingFrames').val("");
+                    // $(".flagValueDebug").removeClass("hide");
                 }
             } else
             {
-                let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
-                    color: '#0d47a1',
-                    opacity: 1.0,
-                    width: 0
-                });
-                console.log(frag);
-                let f = new FlagValues(frag);
-                this.oscFrags.push(f);
+                if(this.isReadyDoubleClick) {
+
+                    let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                        color: '#0d47a1',
+                        opacity: 1.0,
+                        width: 0
+                    });
+                    console.log(frag);
+                    let f = new FlagValues(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
+                    this.oscFrags.push(f);
+                }
+
             }
+
+            this.isReadyDoubleClick = false;
         }
 
         if(evt.button == 1)
         {
             for(let i = 0; i < this.oscFrags.length; i++)
             {
-                if(this.oscFrags[i].frag.x()+this.fragWidth > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
+                if(this.oscFrags[i].frag.x()+this.oscFrags[i].width > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
                 {
                     this.oscFrags[i].frag.remove();
                     this.oscFrags.splice(i,1);
@@ -245,13 +306,27 @@ class Main
         }
 
 
+        // シングルクリックを受理、300ms間だけダブルクリック判定を残す
+        this.isReadyDoubleClick = true;
+        setTimeout( ()=> {
+            // ダブルクリックによりclickedフラグがリセットされていない
+            //     -> シングルクリックだった
+            if (this.isReadyDoubleClick) {
+                // alert("single click!");
+            }
+
+            this.isReadyDoubleClick = false;
+        }, 300);
+
+
     }
 
     public calDuration()
     {
         this.durationFrameNums = this.duration_f + this.duration_s*this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
         console.log(this.durationFrameNums);
-        this.framePerPixel = this.timeline.width() / this.durationFrameNums;
+        this.framePerPixel =  this.durationFrameNums/this.timeline.width();
+        this.pixelPerFrame = this.timeline.width()/this.durationFrameNums;
     }
 
     public onDurationChange =()=>
@@ -409,15 +484,16 @@ class Main
                         //AudioBufferインスタンスを変数へ格納
                         // let buffer = audioBuffer;
                         console.log(audioBuffer.duration);
-                        this.draw.size(audioBuffer.duration*60/this.durationFrameNums * this.timeline.width(),this.timelineHeight);
+                        this.draw.size(audioBuffer.duration*60/this.durationFrameNums * this.timeline.width(),100);
                         // this.draw.scale(1.0,1.0);
+                        this.draw.fill("#444");
+
 
 
                         this.audioBuffers.push(audioBuffer);
                         let source = this.audioContext.createBufferSource();
                         source.buffer = audioBuffer;
                         // this.audioSouces.push(source);
-
 
 
                         var channelLs = new Float32Array(audioBuffer.length);
@@ -514,7 +590,7 @@ class Main
 
 
             let mill = dTime - Math.floor(dTime);
-            console.log(dTime);
+            console.log("playingTIme: " + (dTime+this.playingTime)*60);
             let framenum = Math.floor(mill * 60);
 
 
@@ -529,6 +605,26 @@ class Main
 
             let h = Math.floor( (this.playingTime+dTime) / 3600);;
             $('.timeline_h').text(h);
+
+            let oscNum = 0;
+            for(let i = 0; i < this.oscFrags.length; i++)
+            {
+                let fragtime = this.oscFrags[i].time;
+                let fragtime_floored = Math.floor(fragtime);
+                let frameNum = fragtime - fragtime_floored;
+                if((this.playingTime+dTime)*60 > fragtime && (this.playingTime+dTime)*60 < fragtime+this.oscFrags[i].sendingOscTime )
+                {
+                    $(".flagValueDebug").text(JSON.stringify(this.oscFrags[i].values));
+                    oscNum++;
+                }
+            }
+
+            if(oscNum == 0)
+            {
+                $(".flagValueDebug").text("");
+            }
+
+
 
 
 

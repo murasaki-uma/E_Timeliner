@@ -45,8 +45,11 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
-
-
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Yu Gothic", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+}
+body
+  padding 10px
 .main_nav
 
 .contoller
@@ -59,10 +62,42 @@ table {
   
 .timelines
   position relative
+  height 350px
   #timeline,#timelineScale
     position: absolute
 
+.editFragValue
+  display flex
+
+.flagValueDebug,p
+  font-size 24px
+  margin 10px 0
+
+.flagValueDebug
+  background #000000
+  color #FFFFFF
+  width 600px
+  height 300px
+
 .inputFlagValue
+  margin-right 40px
+
+.inputFlagValue,#sendingFrames
   height 50px
   width 300px
   font-size  24px
+  background-color #8a8a8a
+  margin 0 10px
+  margin-left 0
+  //background-color #363636
+
+#sendingFrames
+  width 150px
+  margin 0 10px
+
+.edit
+  color #000
+  background-color deepskyblue!important
+
+.hide
+  display none
