@@ -74534,6 +74534,9 @@ var Main = (function () {
         // public time_update:number;
         this.isPlayFirst = true;
         this.isPause = false;
+        this.onDurationChange = function () {
+            _this.calDuration();
+        };
         this.play = function () {
             console.log("push play");
             if (__WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').hasClass('pause')) {
@@ -74623,7 +74626,7 @@ var Main = (function () {
                             //AudioBufferインスタンスを変数へ格納
                             // let buffer = audioBuffer;
                             console.log(audioBuffer.duration);
-                            _this.draw.size(audioBuffer.duration * 60 * _this.audioScale.x, 100);
+                            _this.draw.size(audioBuffer.duration * 60 / _this.durationFrameNums * _this.timeline.width(), 100);
                             // this.draw.scale(1.0,1.0);
                             _this.audioBuffers.push(audioBuffer);
                             var source = _this.audioContext.createBufferSource();
@@ -74710,13 +74713,13 @@ var Main = (function () {
     Main.prototype.init = function () {
         var _this = this;
         this.timeline = __WEBPACK_IMPORTED_MODULE_0_svg_js__('timeline').size(this.timelineWidth, this.timelineHeight);
-        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, 100);
         console.log(__WEBPACK_IMPORTED_MODULE_1_jquery__('#min').val());
         this.duration_h = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#hour').val());
         this.duration_m = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#min').val());
         this.duration_s = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#sec').val());
         this.duration_f = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#frame').val());
         this.calDuration();
+        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, 100);
         // let rect = this.timeline.rect(100,100).fill('#f06');
         // let p0_x = this.lineWidth
         var polyline = this.timeline.polyline([
@@ -74744,14 +74747,15 @@ var Main = (function () {
             // Use loc.x and loc.y here
         }, false);
         this.update();
+        __WEBPACK_IMPORTED_MODULE_1_jquery__(".durationValues").on('input', this.onDurationChange);
     };
     Main.prototype.calDuration = function () {
         this.durationFrameNums = this.duration_f + this.duration_s * this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
         console.log(this.durationFrameNums);
-        this.framePerPixel = this.durationFrameNums / this.timeline.width();
+        this.framePerPixel = this.timeline.width() / this.durationFrameNums;
     };
-    Main.prototype.reseize = function () {
-        this.audioScale.x = this.timeline.width();
+    Main.prototype.onWindowResize = function () {
+        // this.audioScale.x = this.timeline.width();
     };
     Main.prototype.getCursor = function (evt) {
         var pt = this.svg_timeline.createSVGPoint();

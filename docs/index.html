@@ -16,22 +16,22 @@
     <div class="contoller">
       <div class="duration">
         <div class="h">
-          <input id="hour" type="number" value="0"/>
+          <input class="durationValues" id="hour" type="number" value="0"/>
           <p>hours</p>
         </div>
         <p>:</p>
         <div class="m">
-          <input id="min" type="number" value="4"/>
+          <input class="durationValues" id="min" type="number" value="4"/>
           <p>mins</p>
         </div>
         <p>:</p>
         <div class="s">
-          <input id="sec" type="number" value="10"/>
+          <input class="durationValues" id="sec" type="number" value="10"/>
           <p>secs</p>
         </div>
         <p>:</p>
         <div class="f">
-          <input id="frame" type="number" value="30"/>
+          <input class="durationValues" id="frame" type="number" value="30"/>
           <p>frames</p>
         </div>
       </div>
@@ -48,8 +48,10 @@
       <input id="stopButton" type="button" value="stop"/>
       <input id="volume" type="range" value="-50" max="0" min="-100"/>
     </div>
-    <div id="timeline"></div>
-    <div id="drawing"></div>
+    <div class="timelines">
+      <div id="timeline"></div>
+      <div id="drawing"></div>
+    </div>
     <!--canvas-->
   </body>
 </html>

@@ -67,7 +67,7 @@ class Main
     public init()
     {
         this.timeline = SVG('timeline').size(this.timelineWidth,this.timelineHeight);
-        this.draw = SVG('drawing').size(700, 100);
+
 
 
         console.log($('#min').val());
@@ -76,6 +76,8 @@ class Main
         this.duration_s = Number($('#sec').val());
         this.duration_f = Number($('#frame').val());
         this.calDuration();
+
+        this.draw = SVG('drawing').size(700, 100);
 
         // let rect = this.timeline.rect(100,100).fill('#f06');
 
@@ -121,18 +123,27 @@ class Main
 
 
         this.update();
+
+        $(".durationValues").on('input',this.onDurationChange);
     }
 
     public calDuration()
     {
         this.durationFrameNums = this.duration_f + this.duration_s*this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
         console.log(this.durationFrameNums);
-        this.framePerPixel = this.durationFrameNums / this.timeline.width();
+        this.framePerPixel = this.timeline.width() / this.durationFrameNums;
     }
 
-    public reseize()
+    public onDurationChange =()=>
     {
-        this.audioScale.x = this.timeline.width();
+        this.calDuration();
+    }
+
+    public onWindowResize()
+    {
+        // this.audioScale.x = this.timeline.width();
+
+
     }
 
     public getCursor(evt) {
@@ -278,7 +289,7 @@ class Main
                         //AudioBufferインスタンスを変数へ格納
                         // let buffer = audioBuffer;
                         console.log(audioBuffer.duration);
-                        this.draw.size(audioBuffer.duration*60*this.audioScale.x,100);
+                        this.draw.size(audioBuffer.duration*60/this.durationFrameNums * this.timeline.width(),100);
                         // this.draw.scale(1.0,1.0);
 
 

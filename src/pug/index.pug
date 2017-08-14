@@ -8,19 +8,19 @@ html
         .contoller
             .duration
                 .h
-                    input#hour(type="number", value="0")
+                    input#hour.durationValues(type="number", value="0")
                     p hours
                 p :
                 .m
-                    input#min(type="number", value="4")
+                    input#min.durationValues(type="number", value="4")
                     p mins
                 p :
                 .s
-                    input#sec(type="number", value="10")
+                    input#sec.durationValues(type="number", value="10")
                     p secs
                 p :
                 .f
-                    input#frame(type="number", value="30")
+                    input#frame.durationValues(type="number", value="30")
                     p frames
             .timeline_time
                 p.timeline_h 00
@@ -34,8 +34,9 @@ html
             input#playButton.play(type="button", value="PLAY")
             input#stopButton(type="button", value="stop")
             input#volume(type="range", value="-50",max="0", min="-100")
-        #timeline
-        #drawing
+        .timelines
+            #timeline
+            #drawing
         //canvas
 
 

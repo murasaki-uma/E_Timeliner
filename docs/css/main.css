@@ -136,3 +136,9 @@ table {
 .timeline_time {
   display: flex;
 }
+.timelines {
+  position: relative;
+}
+.timelines #timeline {
+  position: absolute;
+}
