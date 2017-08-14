@@ -74502,6 +74502,34 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 // console.log(SVG);
+var FlagValues = (function () {
+    function FlagValues(frag) {
+        var _this = this;
+        this.values = { name: "value" };
+        this.isSelected = false;
+        this.select = function () {
+            console.log(_this.frag.id());
+            _this.isSelected = true;
+            _this.frag.stroke({
+                color: '#0d47a1',
+                opacity: 1.0,
+                width: 1
+            });
+            __WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").val(JSON.stringify(_this.values));
+        };
+        this.diselect = function () {
+            _this.isSelected = false;
+            _this.frag.stroke({ opacity: 0.0 });
+        };
+        this.frag = frag;
+        // this.frag.id()
+        // $("#" + this.frag.id()).on('click',this.select());
+    }
+    FlagValues.prototype.setInputValues = function () {
+        this.values = JSON.parse(__WEBPACK_IMPORTED_MODULE_1_jquery__(".inputFlagValue").val());
+    };
+    return FlagValues;
+}());
 var Main = (function () {
     function Main() {
         var _this = this;
@@ -74537,18 +74565,50 @@ var Main = (function () {
         this.fragWidth = 6;
         this.mousePosOnTimeline = { x: 0, y: 0 };
         this.oscFrags = [];
+        this.onFlagEdited = function () {
+            for (var i = 0; i < _this.oscFrags.length; i++) {
+            }
+        };
         this.addOsc = function (evt) {
             console.log("onMouseUp");
             console.log(evt);
             if (evt.button == 0) {
-                var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" });
-                console.log(frag);
-                _this.oscFrags.push(frag);
+                if (_this.oscFrags.length > 0) {
+                    var isCheck = false;
+                    for (var i = 0; i < _this.oscFrags.length; i++) {
+                        _this.oscFrags[i].diselect();
+                        if (_this.oscFrags[i].frag.x() + _this.fragWidth > _this.mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= _this.mousePosOnTimeline.x) {
+                            isCheck = true;
+                            _this.oscFrags[i].select();
+                        }
+                    }
+                    if (!isCheck) {
+                        var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" }).stroke({
+                            color: '#0d47a1',
+                            opacity: 1.0,
+                            width: 0
+                        });
+                        console.log(frag);
+                        var f = new FlagValues(frag);
+                        _this.oscFrags.push(f);
+                    }
+                }
+                else {
+                    var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" }).stroke({
+                        color: '#0d47a1',
+                        opacity: 1.0,
+                        width: 0
+                    });
+                    console.log(frag);
+                    var f = new FlagValues(frag);
+                    _this.oscFrags.push(f);
+                }
             }
             if (evt.button == 1) {
                 for (var i = 0; i < _this.oscFrags.length; i++) {
-                    if (_this.oscFrags[i].x() + _this.fragWidth > _this.mousePosOnTimeline.x && _this.oscFrags[i].x() <= _this.mousePosOnTimeline.x) {
-                        _this.oscFrags[i].remove();
+                    if (_this.oscFrags[i].frag.x() + _this.fragWidth > _this.mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= _this.mousePosOnTimeline.x) {
+                        _this.oscFrags[i].frag.remove();
+                        _this.oscFrags.splice(i, 1);
                     }
                 }
             }

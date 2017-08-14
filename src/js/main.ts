@@ -7,10 +7,42 @@ import * as Math from "mathjs";
 
 class FlagValues
 {
-    
-    constructor()
+    public frag:SVG.Rect;
+    public values:any = {name:"value"};
+    public isSelected:boolean = false;
+    constructor(frag:SVG.Rect)
+    {
+        this.frag = frag;
+        // this.frag.id()
+
+        // $("#" + this.frag.id()).on('click',this.select());
+
+    }
+
+    public select =()=>
     {
 
+        console.log(this.frag.id());
+        this.isSelected = true;
+        this.frag.stroke({
+            color: '#0d47a1',
+            opacity: 1.0,
+            width: 1
+        });
+        $(".inputFlagValue").val(JSON.stringify(this.values));
+    }
+
+    public diselect =()=>
+    {
+        this.isSelected = false;
+        this.frag.stroke({opacity:0.0});
+
+
+    }
+
+    public setInputValues()
+    {
+        this.values = JSON.parse( $(".inputFlagValue").val());
     }
 }
 
@@ -74,7 +106,7 @@ class Main
     public fragWidth:number = 6;
     public mousePosOnTimeline:any = {x:0,y:0};
 
-    public oscFrags:SVG.Rect[] = [];
+    public oscFrags:FlagValues[] = [];
 
     constructor()
     {
@@ -148,6 +180,14 @@ class Main
         $(".durationValues").on('input',this.onDurationChange);
     }
 
+    public onFlagEdited =()=>
+    {
+        for(let i = 0; i < this.oscFrags.length; i++)
+        {
+
+        }
+    }
+
     public addOsc =(evt)=>
     {
 
@@ -155,18 +195,51 @@ class Main
         console.log(evt);
         if(evt.button == 0)
         {
-            let frag = this.timeline.rect(this.fragWidth, this.timelineHeight-this.lineWidth).move(this.mousePosOnTimeline.x,this.lineWidth/2).fill({color:"rgba(13, 71, 161,0.5)"});
-            console.log(frag);
-            this.oscFrags.push(frag);
+
+            if(this.oscFrags.length > 0)
+            {
+
+                let isCheck = false;
+                for(let i = 0; i < this.oscFrags.length; i++) {
+                    this.oscFrags[i].diselect();
+                    if (this.oscFrags[i].frag.x() + this.fragWidth > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
+                    {
+                        isCheck = true;
+                        this.oscFrags[i].select();
+                    }
+                }
+                if(!isCheck)
+                {
+                    let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                        color: '#0d47a1',
+                        opacity: 1.0,
+                        width: 0
+                    });
+                    console.log(frag);
+                    let f = new FlagValues(frag);
+                    this.oscFrags.push(f);
+                }
+            } else
+            {
+                let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                    color: '#0d47a1',
+                    opacity: 1.0,
+                    width: 0
+                });
+                console.log(frag);
+                let f = new FlagValues(frag);
+                this.oscFrags.push(f);
+            }
         }
 
         if(evt.button == 1)
         {
             for(let i = 0; i < this.oscFrags.length; i++)
             {
-                if(this.oscFrags[i].x()+this.fragWidth > this.mousePosOnTimeline.x && this.oscFrags[i].x() <= this.mousePosOnTimeline.x)
+                if(this.oscFrags[i].frag.x()+this.fragWidth > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
                 {
-                    this.oscFrags[i].remove();
+                    this.oscFrags[i].frag.remove();
+                    this.oscFrags.splice(i,1);
                 }
             }
         }
