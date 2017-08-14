@@ -30,10 +30,10 @@ class Main
 
     public audioScale:any = {x:1,y:1.0};
 
-    public duration_h:$;
-    public duration_m:$;
-    public duration_s:$;
-    public duration_f:$;
+    public duration_h:number = 0;
+    public duration_m:number = 0;
+    public duration_s:number = 0;
+    public duration_f:number = 0;
     public fps:number = 60;
 
     public framePerPixel:number = 0;
@@ -43,10 +43,21 @@ class Main
     public preSec:number=0;
     public preFrame:number = 0;
 
-    public startTime:number;
+
+    public updateStartTime:number = 0;
+    public updateStopTime:number = 0;
+    public updatePauseTime:number = 0;
+
+    public startTime:number = 0;
+    public replayTime:number = 0;
+    public pausingTime:number = 0;
+    public playingTime:number = 0;
     public nowTime:number;
 
-    public time_update:number;
+    // public time_update:number;
+
+    public isPlayFirst:boolean = true;
+    public isPause:boolean = false;
 
     constructor()
     {
@@ -57,6 +68,14 @@ class Main
     {
         this.timeline = SVG('timeline').size(this.timelineWidth,this.timelineHeight);
         this.draw = SVG('drawing').size(700, 100);
+
+
+        console.log($('#min').val());
+        this.duration_h = Number($('#hour').val());
+        this.duration_m = Number($('#min').val());
+        this.duration_s = Number($('#sec').val());
+        this.duration_f = Number($('#frame').val());
+        this.calDuration();
 
         // let rect = this.timeline.rect(100,100).fill('#f06');
 
@@ -79,16 +98,12 @@ class Main
         this.audioContext = new AudioContext();
 
 
-        this.duration_h = $('#hour');
-        this.duration_m = $('#mins');
-        this.duration_s = $('#secs');
-        this.duration_f = $('#frames');
-        this.calDuration();
+
 
         this.soundOpen("sound/sample.mp3");
 
         $("#playButton").on('click',this.play);
-        $("#stopButton").on('click',this.stop);
+        $("#stopButton").on('click',this.pause);
         $("#volume").on('input',this.setVolume);
 
         this.svg_timeline = document.querySelector('#'+this.timeline.id());
@@ -111,6 +126,7 @@ class Main
     public calDuration()
     {
         this.durationFrameNums = this.duration_f + this.duration_s*this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
+        console.log(this.durationFrameNums);
         this.framePerPixel = this.durationFrameNums / this.timeline.width();
     }
 
@@ -141,74 +157,96 @@ class Main
     public play = () =>
     {
 
-        this.preFrame = 0;
-        this.startTime = new Date().getTime();
-        this.nowTime = new Date().getTime();
-        // this.resetTime();
-        this.isPlay = true;
-        this.update();
-        //AudioBufferSourceNodeを作成する
-        this.audioSouce = this.audioContext.createBufferSource();
-        //bufferプロパティにAudioBufferインスタンスを設定
-        this.audioSouce.buffer = this.audioBuffers[0];
-        //ループ
-        this.audioSouce.loop = false;
-        //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
-        this.audioSouce.connect(this.audioContext.destination);
 
-        //GainNodeを作成する
-        this.audioGainNode = this.audioContext.createGain();
-        //sourceをGainNodeへ接続する
-        this.audioSouce.connect(this.audioGainNode);
-        //GainNodeをAudioDestinationNodeに接続
-        this.audioGainNode.connect(this.audioContext.destination);
-        // this.audioGainNode.gain.value = -0.4;
+        console.log("push play");
 
-        this.setVolume();
+        if($('#playButton').hasClass('pause')){
 
-        // this.audioSouces[0].start = this.audioSouces[0].start || this.audioSouces[0].noteOn;
-        // this.audioSouces[0].stop  = this.audioSouces[0].stop  || this.audioSouces[0].noteOff;
+            this.pause();
 
-        //始めからの再生の場合
-            //スタート時間を変数startTimeに格納
-            let startTime = 0;
+        }else if($('#playButton').hasClass('play')) {
 
-        if($('#playButton').hasClass("pause"))
-        {
-            startTime = this.pauseTime;
+            // this.resetTime();
+            this.isPlay = true;
+            this.update();
+            //AudioBufferSourceNodeを作成する
+            this.audioSouce = this.audioContext.createBufferSource();
+            //bufferプロパティにAudioBufferインスタンスを設定
+            this.audioSouce.buffer = this.audioBuffers[0];
+            //ループ
+            this.audioSouce.loop = false;
+            //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
+            this.audioSouce.connect(this.audioContext.destination);
 
-            $('#playButton').removeClass('pause');
-        } else
-        {
+            //GainNodeを作成する
+            this.audioGainNode = this.audioContext.createGain();
+            //sourceをGainNodeへ接続する
+            this.audioSouce.connect(this.audioGainNode);
+            //GainNodeをAudioDestinationNodeに接続
+            this.audioGainNode.connect(this.audioContext.destination);
+            // this.audioGainNode.gain.value = -0.4;
+
+
+            this.setVolume();
+            this.updateStartTime = new Date().getTime();
+
+
+            if (this.isPlayFirst) {
+                //スタート時間を変数startTimeに格納
+                this.startTime = this.audioContext.currentTime;
+                this.replayTime = this.startTime;
+                //停止されている時間を初期は0にしておく
+                this.pausingTime = 0;
+                this.isPlayFirst = false;
+
+
+            } else {
+                //再スタート時間を変数replayTimeに格納
+                this.replayTime = this.audioContext.currentTime;
+                //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
+                this.pausingTime += this.replayTime - this.pauseTime;
+                this.isPause = false;
+            }
+
+            //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
+            var playTime = this.replayTime - this.startTime - this.pausingTime;
+
+            //再生
+            this.audioSouce.start(0, playTime);
+
+            //クラスとテキスト変更
+            $('.play').removeClass('play').addClass('pause').html('PAUSE');
+
 
         }
 
-            // first_flg = false;
-        // }else{
-        //     //再スタート時間を変数replayTimeに格納
-        //     replayTime = context.currentTime;
-        //     //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
-        //     pausingTime += replayTime - pauseTime;
-        // }
-
-        //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
-        // var playTime = replayTime - startTime - pausingTime;
-
-        //再生
-        this.audioSouce.start(0,startTime);
-
-        //クラスとテキスト変更
-        // $('.play').removeClass('play').addClass('pause').html('PAUSE');
     }
 
-    public stop=()=>
+
+    public resetTime =()=>
+    {
+        this.preFrame = 0;
+        this.startTime = new Date().getTime();
+        this.nowTime = new Date().getTime();
+    }
+
+
+    public pause=()=>
     {
         this.pauseTime = this.audioContext.currentTime;
         this.audioSouce.stop(0);
 
         //クラスとテキスト変更
         this.isPlay = false;
-        $('#playButton').addClass('pause');
+        $('#playButton').addClass('play');
+        $('#playButton').removeClass('pause');
+        $('#playButton').html('PLAY');
+
+        this.updatePauseTime = new Date().getTime();
+        this.isPause = true;
+
+        this.playingTime +=  (new Date().getTime() - this.updateStartTime)/1000;
+
     }
 
     public setVolume =()=>
@@ -331,39 +369,43 @@ class Main
 
         if(this.isPlay) {
 
-            this.preFrame++;
 
-            if(this.preSec != new Date().getSeconds())
-            {
 
-                if(new Date().getSeconds() == 0)
-                {
-                    this.preFrame = time;
-                }
-            }
+            let dTime = (new Date().getTime() - this.updateStartTime)/1000;
 
-            let dTime = (this.nowTime - this.startTime)/1000;
-            this.nowTime = new Date().getTime();
-            console.log(dTime);
-            let per = this.audioContext.currentTime / this.audioBuffers[0].duration;
-            // console.log(per);
-            this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
+
 
             this.preSec = new Date().getSeconds();
 
 
         // this.timeToDom();
-            $('.timeline_s').text(Math.floor(dTime));
-            // $('.timeline_f').text(new Date().)
-            // console.log(this.audioContext.currentTime)\
-            // Math.fraction()
+
+
 
             let mill = dTime - Math.floor(dTime);
-            console.log(mill);
-            $('.timeline_f').text(Math.floor(mill * 60));
-            requestAnimationFrame(this.update);
+            console.log(dTime);
+            let framenum = Math.floor(mill * 60);
+
+
+            $('.timeline_f').text(framenum);
+            let _s = Math.floor((this.playingTime+dTime)%60);
+            $('.timeline_s').text(_s);
+
+
+            let _m = Math.floor( (this.playingTime+dTime) % 3600 / 60 );
+            console.log(_m);
+            $('.timeline_m').text(_m);
+
+            let h = Math.floor( (this.playingTime+dTime) / 3600);;
+            $('.timeline_h').text(h);
+
+
+            let per = (dTime*60) / this.durationFrameNums;
+            this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
 
         }
+
+        requestAnimationFrame(this.update);
     }
 }
 

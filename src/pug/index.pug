@@ -12,7 +12,7 @@ html
                     p hours
                 p :
                 .m
-                    input#minuts(type="number", value="4")
+                    input#min(type="number", value="4")
                     p mins
                 p :
                 .s
@@ -31,7 +31,7 @@ html
                 p :
                 p.timeline_f 00
 
-            input#playButton(type="button", value="play")
+            input#playButton.play(type="button", value="PLAY")
             input#stopButton(type="button", value="stop")
             input#volume(type="range", value="-50",max="0", min="-100")
         #timeline
