@@ -4,6 +4,16 @@ import * as $ from "jquery";
 import * as Math from "mathjs";
 // console.log(SVG);
 
+
+class FlagValues
+{
+    
+    constructor()
+    {
+
+    }
+}
+
 class Main
 {
     public xhr:XMLHttpRequest;
@@ -13,13 +23,14 @@ class Main
     public audioGainNode:any;
     private draw:SVG.Container;
     private timeline:SVG.Container;
+    private timelineScale:SVG.Container;
     private startTime:number = 0;
     private replayTime:number = 0;
 
     private pauseTime:number = 0;
 
     public timelineWidth:number = window.innerWidth*0.9;
-    public timelineHeight:number = 100;
+    public timelineHeight:number = 300;
     public lineWidth:number = 2;
     public selectedLine:SVG.Line;
     public svg_timeline:any;
@@ -59,6 +70,8 @@ class Main
     public isPlayFirst:boolean = true;
     public isPause:boolean = false;
 
+
+    public fragWidth:number = 6;
     public mousePosOnTimeline:any = {x:0,y:0};
 
     public oscFrags:SVG.Rect[] = [];
@@ -71,7 +84,7 @@ class Main
     public init()
     {
         this.timeline = SVG('timeline').size(this.timelineWidth,this.timelineHeight);
-
+        this.timelineScale = SVG('timelineScale').size(this.timelineWidth,this.timelineHeight);
 
 
         console.log($('#min').val());
@@ -81,7 +94,7 @@ class Main
         this.duration_f = Number($('#frame').val());
         this.calDuration();
 
-        this.draw = SVG('drawing').size(700, 100);
+        this.draw = SVG('drawing').size(700, this.timelineHeight);
 
         // let rect = this.timeline.rect(100,100).fill('#f06');
 
@@ -142,7 +155,7 @@ class Main
         console.log(evt);
         if(evt.button == 0)
         {
-            let frag = this.timeline.rect(this.lineWidth, this.timelineHeight-this.lineWidth).move(this.mousePosOnTimeline.x+this.lineWidth/2,this.lineWidth/2);
+            let frag = this.timeline.rect(this.fragWidth, this.timelineHeight-this.lineWidth).move(this.mousePosOnTimeline.x,this.lineWidth/2).fill({color:"rgba(13, 71, 161,0.5)"});
             console.log(frag);
             this.oscFrags.push(frag);
         }
@@ -151,7 +164,7 @@ class Main
         {
             for(let i = 0; i < this.oscFrags.length; i++)
             {
-                if(this.oscFrags[i].x() > this.mousePosOnTimeline.x - this.lineWidth/2 && this.oscFrags[i].x() < this.mousePosOnTimeline.x + this.lineWidth/2)
+                if(this.oscFrags[i].x()+this.fragWidth > this.mousePosOnTimeline.x && this.oscFrags[i].x() <= this.mousePosOnTimeline.x)
                 {
                     this.oscFrags[i].remove();
                 }
@@ -323,7 +336,7 @@ class Main
                         //AudioBufferインスタンスを変数へ格納
                         // let buffer = audioBuffer;
                         console.log(audioBuffer.duration);
-                        this.draw.size(audioBuffer.duration*60/this.durationFrameNums * this.timeline.width(),100);
+                        this.draw.size(audioBuffer.duration*60/this.durationFrameNums * this.timeline.width(),this.timelineHeight);
                         // this.draw.scale(1.0,1.0);
 
 

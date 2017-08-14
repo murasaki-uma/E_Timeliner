@@ -74510,7 +74510,7 @@ var Main = (function () {
         this.replayTime = 0;
         this.pauseTime = 0;
         this.timelineWidth = window.innerWidth * 0.9;
-        this.timelineHeight = 100;
+        this.timelineHeight = 300;
         this.lineWidth = 2;
         this.isPlay = false;
         this.audioScale = { x: 1, y: 1.0 };
@@ -74534,19 +74534,20 @@ var Main = (function () {
         // public time_update:number;
         this.isPlayFirst = true;
         this.isPause = false;
+        this.fragWidth = 6;
         this.mousePosOnTimeline = { x: 0, y: 0 };
         this.oscFrags = [];
         this.addOsc = function (evt) {
             console.log("onMouseUp");
             console.log(evt);
             if (evt.button == 0) {
-                var frag = _this.timeline.rect(_this.lineWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x + _this.lineWidth / 2, _this.lineWidth / 2);
+                var frag = _this.timeline.rect(_this.fragWidth, _this.timelineHeight - _this.lineWidth).move(_this.mousePosOnTimeline.x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" });
                 console.log(frag);
                 _this.oscFrags.push(frag);
             }
             if (evt.button == 1) {
                 for (var i = 0; i < _this.oscFrags.length; i++) {
-                    if (_this.oscFrags[i].x() > _this.mousePosOnTimeline.x - _this.lineWidth / 2 && _this.oscFrags[i].x() < _this.mousePosOnTimeline.x + _this.lineWidth / 2) {
+                    if (_this.oscFrags[i].x() + _this.fragWidth > _this.mousePosOnTimeline.x && _this.oscFrags[i].x() <= _this.mousePosOnTimeline.x) {
                         _this.oscFrags[i].remove();
                     }
                 }
@@ -74644,7 +74645,7 @@ var Main = (function () {
                             //AudioBufferインスタンスを変数へ格納
                             // let buffer = audioBuffer;
                             console.log(audioBuffer.duration);
-                            _this.draw.size(audioBuffer.duration * 60 / _this.durationFrameNums * _this.timeline.width(), 100);
+                            _this.draw.size(audioBuffer.duration * 60 / _this.durationFrameNums * _this.timeline.width(), _this.timelineHeight);
                             // this.draw.scale(1.0,1.0);
                             _this.audioBuffers.push(audioBuffer);
                             var source = _this.audioContext.createBufferSource();
@@ -74731,13 +74732,14 @@ var Main = (function () {
     Main.prototype.init = function () {
         var _this = this;
         this.timeline = __WEBPACK_IMPORTED_MODULE_0_svg_js__('timeline').size(this.timelineWidth, this.timelineHeight);
+        this.timelineScale = __WEBPACK_IMPORTED_MODULE_0_svg_js__('timelineScale').size(this.timelineWidth, this.timelineHeight);
         console.log(__WEBPACK_IMPORTED_MODULE_1_jquery__('#min').val());
         this.duration_h = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#hour').val());
         this.duration_m = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#min').val());
         this.duration_s = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#sec').val());
         this.duration_f = Number(__WEBPACK_IMPORTED_MODULE_1_jquery__('#frame').val());
         this.calDuration();
-        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, 100);
+        this.draw = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(700, this.timelineHeight);
         // let rect = this.timeline.rect(100,100).fill('#f06');
         // let p0_x = this.lineWidth
         var polyline = this.timeline.polyline([

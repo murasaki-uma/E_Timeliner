@@ -139,6 +139,12 @@ table {
 .timelines {
   position: relative;
 }
-.timelines #timeline {
+.timelines #timeline,
+.timelines #timelineScale {
   position: absolute;
+}
+.inputFlagValue {
+  height: 50px;
+  width: 300px;
+  font-size: 24px;
 }

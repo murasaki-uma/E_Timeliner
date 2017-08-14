@@ -35,8 +35,11 @@ html
             input#stopButton(type="button", value="stop")
             input#volume(type="range", value="-50",max="0", min="-100")
         .timelines
+            #timelineScale
             #timeline
             #drawing
+        .editFragValue
+            input.inputFlagValue(type="text", value='{"name":"value}')
         //canvas
 
 
