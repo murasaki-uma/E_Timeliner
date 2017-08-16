@@ -74918,23 +74918,6 @@ var Main = (function () {
                 // this.resetTime();
                 _this.isPlay = true;
                 _this.update();
-                //AudioBufferSourceNodeを作成する
-                _this.audioSouce = _this.audioContext.createBufferSource();
-                //bufferプロパティにAudioBufferインスタンスを設定
-                _this.audioSouce.buffer = _this.audioBuffers[0];
-                //ループ
-                _this.audioSouce.loop = false;
-                //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
-                _this.audioSouce.connect(_this.audioContext.destination);
-                //GainNodeを作成する
-                _this.audioGainNode = _this.audioContext.createGain();
-                //sourceをGainNodeへ接続する
-                _this.audioSouce.connect(_this.audioGainNode);
-                //GainNodeをAudioDestinationNodeに接続
-                _this.audioGainNode.connect(_this.audioContext.destination);
-                // this.audioGainNode.gain.value = -0.4;
-                _this.setVolume();
-                _this.updateStartTime = new Date().getTime();
                 if (_this.isPlayFirst) {
                     //スタート時間を変数startTimeに格納
                     _this.startTime = _this.audioContext.currentTime;
@@ -74950,15 +74933,33 @@ var Main = (function () {
                     _this.pausingTime += _this.replayTime - _this.pauseTime;
                     _this.isPause = false;
                 }
-                //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
-                var playTime = _this.replayTime - _this.startTime - _this.pausingTime;
-                //再生
-                _this.audioSouce.start(0, playTime);
+                _this.audioPlay();
                 //クラスとテキスト変更
                 __WEBPACK_IMPORTED_MODULE_1_jquery__('.play').removeClass('play').addClass('pause').html('PAUSE');
             }
         };
         this.audioPlay = function () {
+            //AudioBufferSourceNodeを作成する
+            _this.audioSouce = _this.audioContext.createBufferSource();
+            //bufferプロパティにAudioBufferインスタンスを設定
+            _this.audioSouce.buffer = _this.audioBuffers[0];
+            //ループ
+            _this.audioSouce.loop = false;
+            //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
+            _this.audioSouce.connect(_this.audioContext.destination);
+            //GainNodeを作成する
+            _this.audioGainNode = _this.audioContext.createGain();
+            //sourceをGainNodeへ接続する
+            _this.audioSouce.connect(_this.audioGainNode);
+            //GainNodeをAudioDestinationNodeに接続
+            _this.audioGainNode.connect(_this.audioContext.destination);
+            // this.audioGainNode.gain.value = -0.4;
+            _this.setVolume();
+            _this.updateStartTime = new Date().getTime();
+            //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
+            var playTime = _this.replayTime - _this.startTime - _this.pausingTime;
+            //再生
+            _this.audioSouce.start(0, playTime);
         };
         this.resetTime = function () {
             _this.preFrame = 0;
@@ -75007,8 +75008,8 @@ var Main = (function () {
                             // this.audioTimeline.cx(1000).cy(60);
                             _this.audioTimeline.fill("#444");
                             _this.audioBuffers.push(audioBuffer);
-                            var source = _this.audioContext.createBufferSource();
-                            source.buffer = audioBuffer;
+                            // let source = this.audioContext.createBufferSource();
+                            // source.buffer = audioBuffer;
                             // this.audioSouces.push(source);
                             var channelLs = new Float32Array(audioBuffer.length);
                             //オーディオデータのチャンネル数が０以上のとき

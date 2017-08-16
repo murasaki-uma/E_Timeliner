@@ -391,27 +391,6 @@ class Main
             // this.resetTime();
             this.isPlay = true;
             this.update();
-            //AudioBufferSourceNodeを作成する
-            this.audioSouce = this.audioContext.createBufferSource();
-            //bufferプロパティにAudioBufferインスタンスを設定
-            this.audioSouce.buffer = this.audioBuffers[0];
-            //ループ
-            this.audioSouce.loop = false;
-            //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
-            this.audioSouce.connect(this.audioContext.destination);
-
-            //GainNodeを作成する
-            this.audioGainNode = this.audioContext.createGain();
-            //sourceをGainNodeへ接続する
-            this.audioSouce.connect(this.audioGainNode);
-            //GainNodeをAudioDestinationNodeに接続
-            this.audioGainNode.connect(this.audioContext.destination);
-            // this.audioGainNode.gain.value = -0.4;
-
-
-            this.setVolume();
-            this.updateStartTime = new Date().getTime();
-
 
             if (this.isPlayFirst) {
                 //スタート時間を変数startTimeに格納
@@ -430,11 +409,8 @@ class Main
                 this.isPause = false;
             }
 
-            //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
-            var playTime = this.replayTime - this.startTime - this.pausingTime;
 
-            //再生
-            this.audioSouce.start(0, playTime);
+            this.audioPlay();
 
             //クラスとテキスト変更
             $('.play').removeClass('play').addClass('pause').html('PAUSE');
@@ -446,7 +422,33 @@ class Main
 
     public audioPlay =()=>
     {
-        
+        //AudioBufferSourceNodeを作成する
+        this.audioSouce = this.audioContext.createBufferSource();
+        //bufferプロパティにAudioBufferインスタンスを設定
+        this.audioSouce.buffer = this.audioBuffers[0];
+        //ループ
+        this.audioSouce.loop = false;
+        //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
+        this.audioSouce.connect(this.audioContext.destination);
+
+        //GainNodeを作成する
+        this.audioGainNode = this.audioContext.createGain();
+        //sourceをGainNodeへ接続する
+        this.audioSouce.connect(this.audioGainNode);
+        //GainNodeをAudioDestinationNodeに接続
+        this.audioGainNode.connect(this.audioContext.destination);
+        // this.audioGainNode.gain.value = -0.4;
+
+
+        this.setVolume();
+        this.updateStartTime = new Date().getTime();
+
+
+        //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
+        var playTime = this.replayTime - this.startTime - this.pausingTime;
+
+        //再生
+        this.audioSouce.start(0, playTime);
     }
 
 
@@ -516,8 +518,8 @@ class Main
 
 
                         this.audioBuffers.push(audioBuffer);
-                        let source = this.audioContext.createBufferSource();
-                        source.buffer = audioBuffer;
+                        // let source = this.audioContext.createBufferSource();
+                        // source.buffer = audioBuffer;
                         // this.audioSouces.push(source);
 
 
