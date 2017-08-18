@@ -1,8 +1,10 @@
+import AudioTimeLine from "./AudioTimeLine";
 declare function require(x: string): any;
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
 import * as Math from "mathjs";
 import "./svg.draggable.js";
+import AudioTimeLine from "./AudioTimeLine";
 // console.log(SVG);
 
 
@@ -119,6 +121,8 @@ class Main
     public nowTime:number;
     public audioStartTime:number = 60*30;
 
+
+
     // public time_update:number;
 
     public isPlayFirst:boolean = true;
@@ -133,6 +137,10 @@ class Main
     public isReadyDoubleClick:boolean = false;
 
     public isAudioDraggable:boolean = false;
+
+
+
+    public audioline:AudioTimeLine;
 
     constructor()
     {
@@ -448,7 +456,8 @@ class Main
         var playTime = this.replayTime - this.startTime - this.pausingTime;
 
         //再生
-        this.audioSouce.start(0, playTime);
+        // this.audioSouce.start(0, playTime);
+        this.audioline.play();
     }
 
 
@@ -518,10 +527,7 @@ class Main
 
 
                         this.audioBuffers.push(audioBuffer);
-                        // let source = this.audioContext.createBufferSource();
-                        // source.buffer = audioBuffer;
-                        // this.audioSouces.push(source);
-
+                        this.audioline = new AudioTimeLine(audioBuffer,successCallback, errorCallback);
 
                         var channelLs = new Float32Array(audioBuffer.length);
 

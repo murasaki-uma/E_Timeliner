@@ -2,18 +2,20 @@ export  default class AudioTimeLine {
 
     public audioSouce:AudioBufferSourceNode;
     public audioContext:AudioContext;
-    public audioBuffer:AudioBuffer;
+    public audioBuffer:ArrayBuffer;
     public audioGainNode:any;
     public replayTime:number;
     public startTime:number;
-    public  pausingTime:number;
-    constructor(audioBuffer:ArrayBuffer)
+    public pausingTime:number;
+    public isPause:boolean = false;
+    constructor(audioBuffer:ArrayBuffer,successCallback,errorCallback)
     {
         this.audioContext = new AudioContext();
+        this.audioContext.decodeAudioData(audioBuffer, successCallback, errorCallback);
         this.audioBuffer = audioBuffer;
     }
 
-    public play()
+    public play =()=>
     {
         //AudioBufferSourceNodeを作成する
         this.audioSouce = this.audioContext.createBufferSource();
@@ -41,11 +43,19 @@ export  default class AudioTimeLine {
         var playTime = this.replayTime - this.startTime - this.pausingTime;
 
         //再生
-        this.audioSouce.start(0, playTime);
+        this.audioSouce.start(0, 0);
     }
 
     public setVolume()
     {
+        var value = document.getElementById( "volume" ).value / 100.0;
+        this.audioGainNode.gain.value = value;
+    }
+
+    public pause =()=>
+    {
+        this.audioSouce.stop(0);
+        this.isPause = true;
 
     }
 }
