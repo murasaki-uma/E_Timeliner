@@ -143,6 +143,7 @@ class Main
 
         $("#playButton").on('click',this.play);
         $("#stopButton").on('click',this.pause);
+        $("#restartButton").on('click',this.restart);
 
 
 
@@ -201,11 +202,28 @@ class Main
 
 
 
-        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.pixelPerFrame,this.timeline.width());
+        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.pixelPerFrame,this.framePerPixel,this.timeline.width());
 
         this.update();
 
 
+    }
+
+    public restart =()=>
+    {
+        this.updateStartTime = 0;
+        this.updateStopTime = 0;
+        this.updatePauseTime = 0;
+        this.playingTime = 0;
+        this.updateStartTime = new Date().getTime();
+        this.audioReset();
+        this.calTimelineBar();
+    }
+
+    public calTimelineBar()
+    {
+        let per = ((this.playingTime)*60) / this.durationFrameNums;
+        this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
     }
 
     public onFlagEdited =()=>
@@ -244,7 +262,8 @@ class Main
 
         if(this.isPointerDown)
         {
-            this.audiolinetest.move(this.moveEnd.x- this.moveStart.x,0);
+            this.audiolinetest.moveAudioDate(this.moveEnd.x- this.moveStart.x,0);
+            this.audiolinetest.moveBG(loc.x- this.moveStart.x,0);
             this.isPointerDown = false;
         }
 
@@ -262,10 +281,7 @@ class Main
         let _m = Math.floor (t % 3600 / 60);
         console.log("m: " + _m + " s: " + _s);
         console.log("time: " + this.mousePosOnTimeline.x * this.framePerPixel);
-
-
-
-            // Use loc.x and loc.y here
+// Use loc.x and loc.y here
     }
 
 
@@ -431,25 +447,43 @@ class Main
 
             // this.resetTime();
             this.isPlay = true;
-            this.update();
 
             this.updateStartTime = new Date().getTime();
 
-            this.audiolinetest.play();
+            this.update();
 
             //クラスとテキスト変更
 
-            $('.play').removeClass('play').addClass('pause').html('PAUSE');
+            if(this.audiolinetest.delay <= (this.playingTime)*60)
+            {
+
+                    this.audioPlay();
+
+            } else
+            {
+                this.audioRestart();
+            }
+
+            $('.play').removeClass('play').addClass('pause').val('PAUSE');
 
         }
 
     }
 
-    public audioPlay =()=>
+    public audioRestart =()=>
     {
-        
+        this.audiolinetest.restart();
     }
 
+    public audioReset =()=>
+    {
+        this.audiolinetest.reset();
+    }
+
+    public audioPlay =()=>
+    {
+        this.audiolinetest.play();
+    }
 
     public resetTime =()=>
     {
@@ -468,7 +502,7 @@ class Main
         this.isPlay = false;
         $('#playButton').addClass('play');
         $('#playButton').removeClass('pause');
-        $('#playButton').html('PLAY');
+        $('#playButton').val('PLAY');
 
         this.updatePauseTime = new Date().getTime();
         this.isPause = true;
@@ -495,6 +529,8 @@ class Main
 
 
             this.preSec = new Date().getSeconds();
+
+
 
 
         // this.timeToDom();
@@ -536,6 +572,23 @@ class Main
                 $(".flagValueDebug").text("");
             }
 
+
+            if(this.audiolinetest.delay <= (this.playingTime+dTime)*60)
+            {
+                console.log("audio play!!");
+                if(!this.audiolinetest.isTimelineStart)
+                {
+
+                    this.audioPlay();
+                    this.audiolinetest.isTimelineStart = true;
+                }
+
+            } else {
+                if (this.audiolinetest.isTimelineStart) {
+                    this.audioReset();
+
+                }
+            }
 
 
 

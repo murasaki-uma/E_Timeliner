@@ -39746,7 +39746,7 @@ module.exports = create();
 
 
 var AudioTimeLine = (function () {
-    function AudioTimeLine(url, pixelPerFrame, timelineWidth) {
+    function AudioTimeLine(url, pixelPerFrame, framePerPixel, timelineWidth) {
         var _this = this;
         this.audioContext = new AudioContext();
         this.replayTime = 0;
@@ -39759,7 +39759,9 @@ var AudioTimeLine = (function () {
         this.pixelPerFrame = 0;
         this.startX = 0;
         this.width = 0;
+        this.isTimelineStart = false;
         this.audioDateLines = [];
+        this.framePerPixel = 0;
         this.onMouseMove = function () {
             console.log("move");
         };
@@ -39804,11 +39806,13 @@ var AudioTimeLine = (function () {
         this.pause = function () {
             _this.pauseTime = _this.audioContext.currentTime;
             _this.audioSouce.stop(0);
+            _this.isPause = true;
         };
         this.svg = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(timelineWidth, 100).move(50, 0);
         this.svg_BG = this.svg.rect(700, 100).fill({ color: "#2196F3", opacity: 0.5 });
-        this.delay = 60 * 5;
+        this.delay = 60 * 3;
         this.pixelPerFrame = pixelPerFrame;
+        this.framePerPixel = framePerPixel;
         __WEBPACK_IMPORTED_MODULE_1_jquery__("#volume").on('input', this.setVolume);
         var test = document.querySelector('#' + this.svg.id());
         test.addEventListener("mousemove", this.onMouseMove, false);
@@ -39866,11 +39870,27 @@ var AudioTimeLine = (function () {
         };
         xhr.send(null);
     }
-    AudioTimeLine.prototype.move = function (x, y) {
+    AudioTimeLine.prototype.moveBG = function (x, y) {
         this.svg_BG.move(this.svg_BG.x() + x, y);
+        this.delay = this.svg_BG.x() * this.framePerPixel;
+    };
+    AudioTimeLine.prototype.moveAudioDate = function (x, y) {
         for (var i = 0; i < this.audioDateLines.length; i++) {
             this.audioDateLines[i].move(this.audioDateLines[i].x() + x, this.audioDateLines[i].y() + y);
         }
+    };
+    AudioTimeLine.prototype.restart = function () {
+        this.isPlayFirst = true;
+        this.isTimelineStart = false;
+    };
+    AudioTimeLine.prototype.reset = function () {
+        this.pause();
+        this.isPlayFirst = true;
+        this.isTimelineStart = false;
+        this.replayTime = 0;
+        this.startTime = 0;
+        this.pausingTime = 0;
+        this.pauseTime = 0;
     };
     return AudioTimeLine;
 }());
@@ -74731,6 +74751,15 @@ var Main = (function () {
         this.isPointerDown = false;
         this.moveStart = { x: 0, y: 0 };
         this.moveEnd = { x: 0, y: 0 };
+        this.restart = function () {
+            _this.updateStartTime = 0;
+            _this.updateStopTime = 0;
+            _this.updatePauseTime = 0;
+            _this.playingTime = 0;
+            _this.updateStartTime = new Date().getTime();
+            _this.audioReset();
+            _this.calTimelineBar();
+        };
         this.onFlagEdited = function () {
             for (var i = 0; i < _this.oscFrags.length; i++) {
             }
@@ -74752,7 +74781,8 @@ var Main = (function () {
             _this.moveEnd.x = loc.x;
             _this.moveEnd.y = loc.y;
             if (_this.isPointerDown) {
-                _this.audiolinetest.move(_this.moveEnd.x - _this.moveStart.x, 0);
+                _this.audiolinetest.moveAudioDate(_this.moveEnd.x - _this.moveStart.x, 0);
+                _this.audiolinetest.moveBG(loc.x - _this.moveStart.x, 0);
                 _this.isPointerDown = false;
             }
         };
@@ -74852,14 +74882,26 @@ var Main = (function () {
             else if (__WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').hasClass('play')) {
                 // this.resetTime();
                 _this.isPlay = true;
-                _this.update();
                 _this.updateStartTime = new Date().getTime();
-                _this.audiolinetest.play();
+                _this.update();
                 //クラスとテキスト変更
-                __WEBPACK_IMPORTED_MODULE_1_jquery__('.play').removeClass('play').addClass('pause').html('PAUSE');
+                if (_this.audiolinetest.delay <= (_this.playingTime) * 60) {
+                    _this.audioPlay();
+                }
+                else {
+                    _this.audioRestart();
+                }
+                __WEBPACK_IMPORTED_MODULE_1_jquery__('.play').removeClass('play').addClass('pause').val('PAUSE');
             }
         };
+        this.audioRestart = function () {
+            _this.audiolinetest.restart();
+        };
+        this.audioReset = function () {
+            _this.audiolinetest.reset();
+        };
         this.audioPlay = function () {
+            _this.audiolinetest.play();
         };
         this.resetTime = function () {
             _this.preFrame = 0;
@@ -74873,7 +74915,7 @@ var Main = (function () {
             _this.isPlay = false;
             __WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').addClass('play');
             __WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').removeClass('pause');
-            __WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').html('PLAY');
+            __WEBPACK_IMPORTED_MODULE_1_jquery__('#playButton').val('PLAY');
             _this.updatePauseTime = new Date().getTime();
             _this.isPause = true;
             _this.playingTime += (new Date().getTime() - _this.updateStartTime) / 1000;
@@ -74909,6 +74951,18 @@ var Main = (function () {
                 if (oscNum == 0) {
                     __WEBPACK_IMPORTED_MODULE_1_jquery__(".flagValueDebug").text("");
                 }
+                if (_this.audiolinetest.delay <= (_this.playingTime + dTime) * 60) {
+                    console.log("audio play!!");
+                    if (!_this.audiolinetest.isTimelineStart) {
+                        _this.audioPlay();
+                        _this.audiolinetest.isTimelineStart = true;
+                    }
+                }
+                else {
+                    if (_this.audiolinetest.isTimelineStart) {
+                        _this.audioReset();
+                    }
+                }
                 var per = ((_this.playingTime + dTime) * 60) / _this.durationFrameNums;
                 _this.playTimeLine.move(_this.timeline.width() * per, _this.lineWidth / 2);
             }
@@ -74917,6 +74971,7 @@ var Main = (function () {
         console.log("hello!");
         __WEBPACK_IMPORTED_MODULE_1_jquery__("#playButton").on('click', this.play);
         __WEBPACK_IMPORTED_MODULE_1_jquery__("#stopButton").on('click', this.pause);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#restartButton").on('click', this.restart);
         this.init();
     }
     Main.prototype.init = function () {
@@ -74948,8 +75003,12 @@ var Main = (function () {
         this.svg_timeline.addEventListener('mousemove', this.onMouseMove, false);
         this.svg_timeline.addEventListener('mouseup', this.addOsc, false);
         __WEBPACK_IMPORTED_MODULE_1_jquery__(".durationValues").on('input', this.onDurationChange);
-        this.audiolinetest = new __WEBPACK_IMPORTED_MODULE_3__AudioTimeLine__["a" /* default */]("sound/sample.mp3", this.pixelPerFrame, this.timeline.width());
+        this.audiolinetest = new __WEBPACK_IMPORTED_MODULE_3__AudioTimeLine__["a" /* default */]("sound/sample.mp3", this.pixelPerFrame, this.framePerPixel, this.timeline.width());
         this.update();
+    };
+    Main.prototype.calTimelineBar = function () {
+        var per = ((this.playingTime) * 60) / this.durationFrameNums;
+        this.playTimeLine.move(this.timeline.width() * per, this.lineWidth / 2);
     };
     Main.prototype.calDuration = function () {
         this.durationFrameNums = this.duration_f + this.duration_s * this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;

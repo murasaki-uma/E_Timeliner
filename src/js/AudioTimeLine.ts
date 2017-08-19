@@ -26,19 +26,20 @@ export default class AudioTimeLine {
     public width:number = 0;
 
     public svgDOM;
-
+    public isTimelineStart:boolean = false;
     public audioDateLines:SVG.Rect[] = [];
+    public framePerPixel:number = 0;
 
-    constructor(url:string, pixelPerFrame:number,timelineWidth:number)
+    constructor(url:string, pixelPerFrame:number,framePerPixel:number,timelineWidth:number)
     {
 
 
         this.svg = SVG('drawing').size(timelineWidth, 100).move(50,0);
         this.svg_BG = this.svg.rect(700,100).fill({color:"#2196F3",opacity:0.5});
 
-        this.delay = 60*5;
+        this.delay = 60*3;
         this.pixelPerFrame = pixelPerFrame;
-
+        this.framePerPixel = framePerPixel;
 
         $("#volume").on('input',this.setVolume);
 
@@ -128,13 +129,22 @@ export default class AudioTimeLine {
         xhr.send(null);
 
     }
-    public move(x,y)
+    public moveBG(x,y)
     {
         this.svg_BG.move(this.svg_BG.x()+x,y);
+
+
+        this.delay = this.svg_BG.x() * this.framePerPixel;
+    }
+
+    public moveAudioDate(x,y)
+    {
         for(let i = 0; i < this.audioDateLines.length; i++)
         {
             this.audioDateLines[i].move(this.audioDateLines[i].x() +x, this.audioDateLines[i].y()+y);
         }
+
+
     }
 
     public onMouseMove =()=>
@@ -192,10 +202,30 @@ export default class AudioTimeLine {
 
     }
 
+    public restart()
+    {
+        this.isPlayFirst = true;
+        this.isTimelineStart = false;
+    }
+
+    public reset()
+    {
+        this.pause();
+        this.isPlayFirst = true;
+        this.isTimelineStart = false;
+
+        this.replayTime = 0;
+        this.startTime = 0;
+        this.pausingTime = 0;
+        this.pauseTime = 0;
+
+    }
+
     public pause = () =>
     {
         this.pauseTime = this.audioContext.currentTime;
         this.audioSouce.stop(0);
+        this.isPause = true;
 
     }
 
