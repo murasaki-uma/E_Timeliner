@@ -133,13 +133,17 @@ class Main
     public isAudioDraggable:boolean = false;
 
     public audiolinetest:AudioTImeLIne;
+    public isPointerDown = false;
+
+    public moveStart = {x:0,y:0};
+    public moveEnd = {x:0,y:0};
     constructor()
     {
         console.log("hello!");
 
         $("#playButton").on('click',this.play);
         $("#stopButton").on('click',this.pause);
-        $("#volume").on('input',this.setVolume);
+
 
 
 
@@ -189,12 +193,15 @@ class Main
 
 
         this.svg_timeline.addEventListener('mousemove',this.onMouseMove,false);
+        this.svg_timeline.addEventListener('pointerdown',this.onPointerDown,false);
+        this.svg_timeline.addEventListener('pointerup',this.onPointerUp,false);
+        this.svg_timeline.addEventListener('mousemove',this.onMouseMove,false);
         this.svg_timeline.addEventListener('mouseup',this.addOsc,false);
         $(".durationValues").on('input',this.onDurationChange);
 
 
-        this.soundOpen("sound/sample.mp3");
-        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.audioStartTime,this.pixelPerFrame);
+
+        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.pixelPerFrame,this.timeline.width());
 
         this.update();
 
@@ -209,6 +216,40 @@ class Main
         }
     }
 
+
+    public onPointerDown =(evt)=>
+    {
+
+        var loc= this.getCursor(evt);
+        if(!this.isPointerDown)
+        {
+            this.moveStart.x = loc.x;
+            this.moveStart.y = loc.y;
+            console.log("start" + this.moveStart);
+        }
+
+        if(loc.x >= this.audiolinetest.startX && loc.x <= this.audiolinetest.width){
+            this.isPointerDown = true;
+        }
+    }
+
+
+
+    public onPointerUp =(evt)=>
+    {
+        console.log("up");
+        var loc= this.getCursor(evt);
+        this.moveEnd.x = loc.x;
+        this.moveEnd.y = loc.y;
+
+        if(this.isPointerDown)
+        {
+            this.audiolinetest.move(this.moveEnd.x- this.moveStart.x,0);
+            this.isPointerDown = false;
+        }
+
+
+    }
     public onMouseMove =(evt)=>
     {
         var loc= this.getCursor(evt);
@@ -221,6 +262,9 @@ class Main
         let _m = Math.floor (t % 3600 / 60);
         console.log("m: " + _m + " s: " + _s);
         console.log("time: " + this.mousePosOnTimeline.x * this.framePerPixel);
+
+
+
             // Use loc.x and loc.y here
     }
 
@@ -388,50 +432,9 @@ class Main
             // this.resetTime();
             this.isPlay = true;
             this.update();
-            //AudioBufferSourceNodeを作成する
-            this.audioSouce = this.audioContext.createBufferSource();
-            //bufferプロパティにAudioBufferインスタンスを設定
-            this.audioSouce.buffer = this.audioBuffers[0];
-            //ループ
-            this.audioSouce.loop = false;
-            //AudioBufferSourceNodeインスタンスをdestinationプロパティに接続
-            this.audioSouce.connect(this.audioContext.destination);
 
-            //GainNodeを作成する
-            this.audioGainNode = this.audioContext.createGain();
-            //sourceをGainNodeへ接続する
-            this.audioSouce.connect(this.audioGainNode);
-            //GainNodeをAudioDestinationNodeに接続
-            this.audioGainNode.connect(this.audioContext.destination);
-            // this.audioGainNode.gain.value = -0.4;
-
-
-            this.setVolume();
             this.updateStartTime = new Date().getTime();
 
-
-            if (this.isPlayFirst) {
-                //スタート時間を変数startTimeに格納
-                this.startTime = this.audioContext.currentTime;
-                this.replayTime = this.startTime;
-                //停止されている時間を初期は0にしておく
-                this.pausingTime = 0;
-                this.isPlayFirst = false;
-
-
-            } else {
-                //再スタート時間を変数replayTimeに格納
-                this.replayTime = this.audioContext.currentTime;
-                //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
-                this.pausingTime += this.replayTime - this.pauseTime;
-                this.isPause = false;
-            }
-
-            //replayTimeからstartTimeとpausingTime引いた時間が曲のスタート時間
-            var playTime = this.replayTime - this.startTime - this.pausingTime;
-
-            //再生
-            // this.audioSouce.start(0, playTime);
             this.audiolinetest.play();
 
             //クラスとテキスト変更
@@ -475,110 +478,8 @@ class Main
 
     }
 
-    public setVolume =()=>
-    {
-        //range属性のvalue取得
-        var value = document.getElementById( "volume" ).value / 100.0;
-        //gainNodeの値に変更
-        // var volume = ( value / 10 ) - 1;
-
-        //gainNodeに代入
-        this.audioGainNode.gain.value = value;
-    }
 
 
-    public soundOpen = (url:string) =>
-    {
-        this.audioContext = new AudioContext();
-
-        var xhr = new XMLHttpRequest();
-        //読み込むデータのURLを書く
-        xhr.open('GET', "sound/sample.mp3", true);
-        xhr.responseType = 'arraybuffer';
-        xhr.onload = ()=> {
-            if (xhr.status === 200) {
-                var arrayBuffer = xhr.response;
-                if (arrayBuffer instanceof ArrayBuffer) {
-                    var successCallback = (audioBuffer)=> {
-
-                        //AudioBufferインスタンスを変数へ格納
-                        // let buffer = audioBuffer;
-                        console.log(audioBuffer.duration);
-                        // this.audioTimeline.size(audioBuffer.duration*60*this.pixelPerFrame,100);
-                        // this.audioTimelineBG.size(this.audioTimeline.width(),this.audioTimeline.height()).fill({color:"#2196F3",opacity:0.5});
-
-                        let startX = this.audioStartTime*this.pixelPerFrame;
-
-                        // this.audioTimelineBG.move(startX,0);
-                        // this.audioTimeline.cx(1000).cy(60);
-                        // this.audioTimeline.fill("#444");
-
-
-
-                        this.audioBuffers.push(audioBuffer);
-                        let source = this.audioContext.createBufferSource();
-                        source.buffer = audioBuffer;
-                        // this.audioSouces.push(source);
-
-
-                        var channelLs = new Float32Array(audioBuffer.length);
-
-                        //オーディオデータのチャンネル数が０以上のとき
-                        if (audioBuffer.numberOfChannels > 0) {
-                            //getChannelDataメソッドで波形データ取得
-                            channelLs.set(audioBuffer.getChannelData(0));
-                        }
-
-
-                        //10ミリ秒
-                        // var n10msec = Math.floor(10 * Math.pow(10, -3) * this.audioContext.sampleRate);
-                        //
-                        // for (var i = 0, len = channelLs.length; i < len; i++) {
-                        //     //10ミリ秒ごとに描画
-                        //     if ((i % n10msec) === 0) {
-                        //         // console.log("count: " + _count + "  " + "c: " + channelLs[i]);
-                        //         let adj_h = this.audioTimeline.height()*0.1;
-                        //         let h = ((1 + channelLs[i]) / 2) * (this.audioTimeline.height())-this.audioTimeline.height()/2;
-                        //         if(h < 0)
-                        //         {
-                        //             h = 0;
-                        //         }
-                        //         let x = (i/len) * this.audioTimeline.width();
-                        //         // console.log(c);
-                        //
-                        //         let y = this.audioTimeline.height()/2;
-                        //
-                        //
-                        //         y -= h/2;
-                        //         let rect = this.audioTimeline.rect(1, h).move(x+startX,  y).fill('#f06');
-                        //         // _count++;
-                        //     }
-                        //
-                        //
-                        // }
-
-
-
-                        //曲の秒数
-                        let soundtime = Math.floor(audioBuffer.length / this.audioContext.sampleRate);
-
-
-                    };
-                    var errorCallback = function() {
-                        window.alert('読み込みに失敗しました');
-                    };
-
-                    this.audioContext.decodeAudioData(arrayBuffer, successCallback, errorCallback);
-                    // this.audiolinetest.audioContext
-
-                }
-            }
-
-        };
-        xhr.send(null);
-
-
-    }
 
     public update = (time) =>
     {

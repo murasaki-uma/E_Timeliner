@@ -2,6 +2,7 @@
  * Created by PurpleUma on 8/20/17.
  */
 import * as SVG from 'svg.js';
+import * as $ from "jquery";
 
 export default class AudioTimeLine {
     public audioContext:AudioContext = new AudioContext();
@@ -21,14 +22,32 @@ export default class AudioTimeLine {
     public svg:SVG.Container;
     public svg_BG:SVG.Rect;
 
-    constructor(url:string, delay:number, pixelPerFrame:number)
+    public startX:number = 0;
+    public width:number = 0;
+
+    public svgDOM;
+
+    public audioDateLines:SVG.Rect[] = [];
+
+    constructor(url:string, pixelPerFrame:number,timelineWidth:number)
     {
 
-        this.svg = SVG('drawing').size(700, 100).move(50,0);
+
+        this.svg = SVG('drawing').size(timelineWidth, 100).move(50,0);
         this.svg_BG = this.svg.rect(700,100).fill({color:"#2196F3",opacity:0.5});
 
-        this.delay = delay;
+        this.delay = 60*5;
         this.pixelPerFrame = pixelPerFrame;
+
+
+        $("#volume").on('input',this.setVolume);
+
+        var test = document.querySelector('#'+this.svg.id());
+        test.addEventListener("mousemove", this.onMouseMove, false);
+
+
+
+
 
         this.audioContext = new AudioContext();
 
@@ -45,14 +64,16 @@ export default class AudioTimeLine {
 
                         this.audioBuffer = audioBuffer;
 
-                        this.svg.size(audioBuffer.duration*60*this.pixelPerFrame,100);
-                        this.svg_BG.size(this.svg.width(),this.svg.height()).fill({color:"#2196F3",opacity:0.5});
+                        // this.svg.size(audioBuffer.duration*60*this.pixelPerFrame,100);
+                        this.svg_BG.size(audioBuffer.duration*60*this.pixelPerFrame,100).fill({color:"#2196F3",opacity:0.5});
 
-                        let startX = this.delay*this.pixelPerFrame;
+                        this.startX = this.delay*this.pixelPerFrame;
 
-                        this.svg_BG.move(startX,0);
+                        this.svg_BG.move(this.startX,0);
+
                         // this.audioTimeline.cx(1000).cy(60);
                         this.svg.fill("#444");
+                        this.width = this.svg.width();
 
                         var channelLs = new Float32Array(audioBuffer.length);
 
@@ -70,20 +91,21 @@ export default class AudioTimeLine {
                             //10ミリ秒ごとに描画
                             if ((i % n10msec) === 0) {
                                 // console.log("count: " + _count + "  " + "c: " + channelLs[i]);
-                                let adj_h = this.svg.height()*0.1;
-                                let h = ((1 + channelLs[i]) / 2) * (this.svg.height())-this.svg.height()/2;
+                                let adj_h = this.svg_BG.height()*0.1;
+                                let h = ((1 + channelLs[i]) / 2) * (this.svg_BG.height())-this.svg_BG.height()/2;
                                 if(h < 0)
                                 {
                                     h = 0;
                                 }
-                                let x = (i/len) * this.svg.width();
+                                let x = (i/len) * this.svg_BG.width();
                                 // console.log(c);
 
-                                let y = this.svg.height()/2;
+                                let y = this.svg_BG.height()/2;
 
 
                                 y -= h/2;
-                                let rect = this.svg.rect(1, h).move(x+startX,  y).fill('#f06');
+                                let rect = this.svg.rect(1, h).move(x+this.startX,  y).fill('#f06');
+                                this.audioDateLines.push(rect);
                                 // _count++;
                             }
 
@@ -106,6 +128,27 @@ export default class AudioTimeLine {
         xhr.send(null);
 
     }
+    public move(x,y)
+    {
+        this.svg_BG.move(this.svg_BG.x()+x,y);
+        for(let i = 0; i < this.audioDateLines.length; i++)
+        {
+            this.audioDateLines[i].move(this.audioDateLines[i].x() +x, this.audioDateLines[i].y()+y);
+        }
+    }
+
+    public onMouseMove =()=>
+    {
+        console.log("move");
+    }
+    public setVolume =()=>
+    {
+        //range属性のvalue取得
+        var value = document.getElementById( "volume" ).value / 100.0;
+
+        this.audioGainNode.gain.value = value;
+    }
+
 
     public play =()=>
     {
