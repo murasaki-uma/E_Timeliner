@@ -2,8 +2,7 @@ declare function require(x: string): any;
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
 import * as Math from "mathjs";
-import "./svg.draggable.js";
-// console.log(SVG);
+import AudioTimeLine from "./AudioTimeLine";
 
 
 class FlagValues
@@ -15,6 +14,7 @@ class FlagValues
     public time:number = 0;
     public width:number = 4;
     public pixelPerFrame:number = 0.1;
+
 
     constructor(frag:SVG.Rect, time:number, pixelPerFrame:number)
     {
@@ -72,7 +72,6 @@ class Main
     public audioBuffers:AudioBuffer[] = [];
     public audioSouce:AudioBufferSourceNode;
     public audioGainNode:any;
-    private audioTimeline:SVG.Container;
     private timeline:SVG.Container;
     private timelineScale:SVG.Container;
     private startTime:number = 0;
@@ -111,7 +110,6 @@ class Main
     public updateStopTime:number = 0;
     public updatePauseTime:number = 0;
 
-    public audioTimelineBG:SVG.Rect;
     public startTime:number = 0;
     public replayTime:number = 0;
     public pausingTime:number = 0;
@@ -134,6 +132,7 @@ class Main
 
     public isAudioDraggable:boolean = false;
 
+    public audiolinetest:AudioTImeLIne;
     constructor()
     {
         console.log("hello!");
@@ -148,6 +147,7 @@ class Main
     }
     public init()
     {
+
         this.timeline = SVG('timeline').size(this.timelineWidth,this.timelineHeight);
         this.timelineScale = SVG('timelineScale').size(this.timelineWidth,this.timelineHeight);
 
@@ -159,11 +159,7 @@ class Main
         this.duration_f = Number($('#frame').val());
         this.calDuration();
 
-        this.audioTimeline = SVG('drawing').size(700, 100).move(50,0);
-        this.audioTimelineBG = this.audioTimeline.rect(700,100).fill({color:"#2196F3",opacity:0.5});
 
-
-        // this.audioTimelineBG.draggable();
 
         let polyline = this.timeline.polyline
             ([
@@ -198,6 +194,7 @@ class Main
 
 
         this.soundOpen("sound/sample.mp3");
+        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.audioStartTime,this.pixelPerFrame);
 
         this.update();
 
@@ -434,11 +431,12 @@ class Main
             var playTime = this.replayTime - this.startTime - this.pausingTime;
 
             //再生
-            this.audioSouce.start(0, playTime);
+            // this.audioSouce.start(0, playTime);
+            this.audiolinetest.play();
 
             //クラスとテキスト変更
-            $('.play').removeClass('play').addClass('pause').html('PAUSE');
 
+            $('.play').removeClass('play').addClass('pause').html('PAUSE');
 
         }
 
@@ -460,8 +458,8 @@ class Main
 
     public pause=()=>
     {
-        this.pauseTime = this.audioContext.currentTime;
-        this.audioSouce.stop(0);
+        // this.pauseTime = this.audioContext.currentTime;
+        // this.audioSouce.stop(0);
 
         //クラスとテキスト変更
         this.isPlay = false;
@@ -473,6 +471,7 @@ class Main
         this.isPause = true;
 
         this.playingTime +=  (new Date().getTime() - this.updateStartTime)/1000;
+        this.audiolinetest.pause();
 
     }
 
@@ -487,6 +486,7 @@ class Main
         this.audioGainNode.gain.value = value;
     }
 
+
     public soundOpen = (url:string) =>
     {
         this.audioContext = new AudioContext();
@@ -496,7 +496,6 @@ class Main
         xhr.open('GET', "sound/sample.mp3", true);
         xhr.responseType = 'arraybuffer';
         xhr.onload = ()=> {
-            console.log(this.audioTimeline);
             if (xhr.status === 200) {
                 var arrayBuffer = xhr.response;
                 if (arrayBuffer instanceof ArrayBuffer) {
@@ -505,13 +504,14 @@ class Main
                         //AudioBufferインスタンスを変数へ格納
                         // let buffer = audioBuffer;
                         console.log(audioBuffer.duration);
-                        this.audioTimeline.size(audioBuffer.duration*60*this.pixelPerFrame,100);
-                        this.audioTimelineBG.size(this.audioTimeline.width(),this.audioTimeline.height()).fill({color:"#2196F3",opacity:0.5});
+                        // this.audioTimeline.size(audioBuffer.duration*60*this.pixelPerFrame,100);
+                        // this.audioTimelineBG.size(this.audioTimeline.width(),this.audioTimeline.height()).fill({color:"#2196F3",opacity:0.5});
 
                         let startX = this.audioStartTime*this.pixelPerFrame;
-                        this.audioTimelineBG.move(startX,0);
+
+                        // this.audioTimelineBG.move(startX,0);
                         // this.audioTimeline.cx(1000).cy(60);
-                        this.audioTimeline.fill("#444");
+                        // this.audioTimeline.fill("#444");
 
 
 
@@ -531,31 +531,31 @@ class Main
 
 
                         //10ミリ秒
-                        var n10msec = Math.floor(10 * Math.pow(10, -3) * this.audioContext.sampleRate);
-
-                        for (var i = 0, len = channelLs.length; i < len; i++) {
-                            //10ミリ秒ごとに描画
-                            if ((i % n10msec) === 0) {
-                                // console.log("count: " + _count + "  " + "c: " + channelLs[i]);
-                                let adj_h = this.audioTimeline.height()*0.1;
-                                let h = ((1 + channelLs[i]) / 2) * (this.audioTimeline.height())-this.audioTimeline.height()/2;
-                                if(h < 0)
-                                {
-                                    h = 0;
-                                }
-                                let x = (i/len) * this.audioTimeline.width();
-                                // console.log(c);
-
-                                let y = this.audioTimeline.height()/2;
-
-
-                                y -= h/2;
-                                let rect = this.audioTimeline.rect(1, h).move(x+startX,  y).fill('#f06');
-                                // _count++;
-                            }
-
-
-                        }
+                        // var n10msec = Math.floor(10 * Math.pow(10, -3) * this.audioContext.sampleRate);
+                        //
+                        // for (var i = 0, len = channelLs.length; i < len; i++) {
+                        //     //10ミリ秒ごとに描画
+                        //     if ((i % n10msec) === 0) {
+                        //         // console.log("count: " + _count + "  " + "c: " + channelLs[i]);
+                        //         let adj_h = this.audioTimeline.height()*0.1;
+                        //         let h = ((1 + channelLs[i]) / 2) * (this.audioTimeline.height())-this.audioTimeline.height()/2;
+                        //         if(h < 0)
+                        //         {
+                        //             h = 0;
+                        //         }
+                        //         let x = (i/len) * this.audioTimeline.width();
+                        //         // console.log(c);
+                        //
+                        //         let y = this.audioTimeline.height()/2;
+                        //
+                        //
+                        //         y -= h/2;
+                        //         let rect = this.audioTimeline.rect(1, h).move(x+startX,  y).fill('#f06');
+                        //         // _count++;
+                        //     }
+                        //
+                        //
+                        // }
 
 
 
@@ -569,6 +569,7 @@ class Main
                     };
 
                     this.audioContext.decodeAudioData(arrayBuffer, successCallback, errorCallback);
+                    // this.audiolinetest.audioContext
 
                 }
             }
