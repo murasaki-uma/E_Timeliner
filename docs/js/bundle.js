@@ -39784,41 +39784,40 @@ var AudioTimeLine = (function () {
             _this.audioSouce.connect(_this.audioGainNode);
             //GainNodeをAudioDestinationNodeに接続
             _this.audioGainNode.connect(_this.audioContext.destination);
-            _this.audioGainNode.gain.value = -0.4;
+            // this.audioGainNode.gain.value = -0.4;
+            _this.setVolume();
         };
-        this.play = function () {
+        this.play = function (time) {
             _this.initAudioSouce();
             if (_this.isPlayFirst) {
                 //スタート時間を変数startTimeに格納
-                _this.startTime = _this.audioContext.currentTime;
-                _this.replayTime = _this.startTime;
-                //停止されている時間を初期は0にしておく
-                _this.pausingTime = 0;
+                _this.replayTime = 0;
                 _this.isPlayFirst = false;
             }
             else {
                 //再スタート時間を変数replayTimeに格納
                 _this.replayTime = _this.audioContext.currentTime;
+                _this.replayTime = (time === undefined ? _this.audioContext.currentTime : time - _this.delay / 60.0);
                 //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
-                _this.pausingTime += _this.replayTime - _this.pauseTime;
+                // this.pausingTime += this.replayTime - this.pauseTime;
                 _this.isPause = false;
             }
             var playTime = _this.replayTime - _this.startTime - _this.pausingTime;
-            _this.audioSouce.start(0, playTime);
-        };
-        this.playOnSetTime = function (playTime) {
-            if (_this.isPlayFirst) {
-                _this.isPlayFirst = false;
+            if (_this.replayTime >= 0) {
+                _this.isTimelineStart = true;
+                _this.audioSouce.start(0, _this.replayTime);
             }
-            _this.reset();
-            _this.initAudioSouce();
-            _this.audioSouce.start(0, playTime - _this.delay * _this.delay / 60);
+            else {
+                _this.isTimelineStart = false;
+                _this.isPlayFirst = true;
+            }
         };
         this.pause = function () {
-            // this.initAudioSouce();
-            _this.pauseTime = _this.audioContext.currentTime;
-            _this.audioSouce.stop(0);
-            _this.isPause = true;
+            if (_this.isTimelineStart) {
+                _this.pauseTime = _this.audioContext.currentTime;
+                _this.audioSouce.stop(0);
+                _this.isPause = true;
+            }
         };
         this.svg = __WEBPACK_IMPORTED_MODULE_0_svg_js__('drawing').size(timelineWidth, 100).move(50, 0);
         this.svg_BG = this.svg.rect(700, 100).fill({ color: "#2196F3", opacity: 0.5 });
@@ -74762,6 +74761,7 @@ var Main = (function () {
         this.isReadyDoubleClick = false;
         this.isAudioDraggable = false;
         this.isPointerDown = false;
+        this.isPointerDrag = false;
         this.moveStart = { x: 0, y: 0 };
         this.moveEnd = { x: 0, y: 0 };
         this.restart = function () {
@@ -74781,10 +74781,10 @@ var Main = (function () {
             var loc = _this.getCursor(evt);
             //
             _this.playingTime = (loc.x * _this.framePerPixel) / 60;
+            _this.updateStartTime = new Date().getTime();
             _this.calTimelineBar();
-            if (_this.audiolinetest.delay <= (_this.playingTime) * 60) {
-                _this.audiolinetest.isTimelineStart = true;
-            }
+            _this.pause();
+            // this.audioPlay();
             if (!_this.isPointerDown) {
                 _this.moveStart.x = loc.x;
                 _this.moveStart.y = loc.y;
@@ -74799,10 +74799,11 @@ var Main = (function () {
             var loc = _this.getCursor(evt);
             _this.moveEnd.x = loc.x;
             _this.moveEnd.y = loc.y;
-            if (_this.isPointerDown) {
+            if (_this.isPointerDrag) {
                 _this.audiolinetest.moveAudioDate(_this.moveEnd.x - _this.moveStart.x, 0);
                 _this.audiolinetest.moveBG(loc.x - _this.moveStart.x, 0);
                 _this.isPointerDown = false;
+                _this.isPointerDrag = false;
             }
         };
         this.onMouseMove = function (evt) {
@@ -74816,7 +74817,16 @@ var Main = (function () {
             var _m = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](t % 3600 / 60);
             console.log("m: " + _m + " s: " + _s);
             console.log("time: " + _this.mousePosOnTimeline.x * _this.framePerPixel);
+            if (_this.isPointerDown) {
+                _this.isPointerDrag = true;
+            }
             // Use loc.x and loc.y here
+        };
+        this.onDragStart = function (event) {
+            console.log("drag start!");
+        };
+        this.onDragEnd = function (event) {
+            console.log("drag end!");
         };
         this.addOsc = function (evt) {
             console.log("onMouseUp");
@@ -74902,15 +74912,8 @@ var Main = (function () {
                 // this.resetTime();
                 _this.isPlay = true;
                 _this.updateStartTime = new Date().getTime();
+                _this.audioPlay();
                 _this.update();
-                //クラスとテキスト変更
-                if (_this.audiolinetest.delay <= (_this.playingTime) * 60) {
-                    _this.audioPlay();
-                    // this.audioSetTimeAndPlay();
-                }
-                else {
-                    _this.audioRestart();
-                }
                 __WEBPACK_IMPORTED_MODULE_1_jquery__('.play').removeClass('play').addClass('pause').val('PAUSE');
             }
         };
@@ -74924,7 +74927,7 @@ var Main = (function () {
             _this.audiolinetest.reset();
         };
         this.audioPlay = function () {
-            _this.audiolinetest.play();
+            _this.audiolinetest.play(_this.playTimeLine.x() * _this.framePerPixel / 60);
         };
         this.resetTime = function () {
             _this.preFrame = 0;
@@ -74942,6 +74945,9 @@ var Main = (function () {
             _this.updatePauseTime = new Date().getTime();
             _this.isPause = true;
             _this.playingTime += (new Date().getTime() - _this.updateStartTime) / 1000;
+            _this.audioPause();
+        };
+        this.audioPause = function () {
             _this.audiolinetest.pause();
         };
         this.update = function (time) {
@@ -74986,6 +74992,7 @@ var Main = (function () {
                     if (_this.audiolinetest.isTimelineStart) {
                         _this.audioReset();
                     }
+                    // this.audioReset();
                 }
                 var per = ((_this.playingTime + dTime) * 60) / _this.durationFrameNums;
                 _this.playTimeLine.move(_this.timeline.width() * per, _this.lineWidth / 2);
@@ -75026,6 +75033,8 @@ var Main = (function () {
         this.svg_timeline.addEventListener('pointerup', this.onPointerUp, false);
         this.svg_timeline.addEventListener('mousemove', this.onMouseMove, false);
         this.svg_timeline.addEventListener('mouseup', this.addOsc, false);
+        this.svg_timeline.addEventListener('dragstart', this.onDragStart, false);
+        this.svg_timeline.addEventListener('dragend', this.onDragEnd, false);
         __WEBPACK_IMPORTED_MODULE_1_jquery__(".durationValues").on('input', this.onDurationChange);
         this.audiolinetest = new __WEBPACK_IMPORTED_MODULE_3__AudioTimeLine__["a" /* default */]("sound/sample.mp3", this.pixelPerFrame, this.framePerPixel, this.timeline.width());
         this.update();

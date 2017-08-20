@@ -177,48 +177,49 @@ export default class AudioTimeLine {
         this.audioSouce.connect(this.audioGainNode);
         //GainNodeをAudioDestinationNodeに接続
         this.audioGainNode.connect(this.audioContext.destination);
-        this.audioGainNode.gain.value = -0.4;
+        // this.audioGainNode.gain.value = -0.4;
+        this.setVolume();
     }
 
 
-    public play =()=>
+    public play =(time? : number)=>
     {
+
         this.initAudioSouce();
 
         if (this.isPlayFirst) {
             //スタート時間を変数startTimeに格納
-            this.startTime = this.audioContext.currentTime;
-            this.replayTime = this.startTime;
-            //停止されている時間を初期は0にしておく
-            this.pausingTime = 0;
+
+            this.replayTime = 0;
             this.isPlayFirst = false;
 
 
         } else {
             //再スタート時間を変数replayTimeに格納
+
             this.replayTime = this.audioContext.currentTime;
+            this.replayTime  =(time === undefined ? this.audioContext.currentTime : time-this.delay/60.0);
             //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
-            this.pausingTime += this.replayTime - this.pauseTime;
+            // this.pausingTime += this.replayTime - this.pauseTime;
             this.isPause = false;
         }
 
         var playTime = this.replayTime - this.startTime - this.pausingTime;
 
-        this.audioSouce.start(0, playTime);
+        if(this.replayTime >= 0)
+        {
+            this.isTimelineStart = true;
+            this.audioSouce.start(0, this.replayTime);
 
-    }
-
-    public playOnSetTime =(playTime)=>
-    {
-        if (this.isPlayFirst) {
-
-            this.isPlayFirst = false;
+        } else {
+            this.isTimelineStart = false;
+            this.isPlayFirst = true;
         }
 
-        this.reset();
-        this.initAudioSouce();
-        this.audioSouce.start(0,playTime-this.delay*this.delay/60);
+
     }
+
+
 
     public restart()
     {
@@ -241,11 +242,12 @@ export default class AudioTimeLine {
 
     public pause = () =>
     {
-        // this.initAudioSouce();
-        this.pauseTime = this.audioContext.currentTime;
-        this.audioSouce.stop(0);
-        this.isPause = true;
-
+        if(this.isTimelineStart)
+        {
+            this.pauseTime = this.audioContext.currentTime;
+            this.audioSouce.stop(0);
+            this.isPause = true;
+        }
     }
 
 }

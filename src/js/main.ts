@@ -134,6 +134,7 @@ class Main
 
     public audiolinetest:AudioTImeLIne;
     public isPointerDown = false;
+    public isPointerDrag:boolean = false;
 
     public moveStart = {x:0,y:0};
     public moveEnd = {x:0,y:0};
@@ -198,6 +199,8 @@ class Main
         this.svg_timeline.addEventListener('pointerup',this.onPointerUp,false);
         this.svg_timeline.addEventListener('mousemove',this.onMouseMove,false);
         this.svg_timeline.addEventListener('mouseup',this.addOsc,false);
+        this.svg_timeline.addEventListener('dragstart',this.onDragStart,false);
+        this.svg_timeline.addEventListener('dragend',this.onDragEnd,false);
         $(".durationValues").on('input',this.onDurationChange);
 
 
@@ -246,12 +249,14 @@ class Main
         //
 
         this.playingTime = (loc.x * this.framePerPixel)/60;
+        this.updateStartTime = new Date().getTime();
         this.calTimelineBar();
+        this.pause();
+        // this.audioPlay();
 
-        if(this.audiolinetest.delay <= (this.playingTime)*60) {
 
-            this.audiolinetest.isTimelineStart = true;
-        }
+
+
 
 
         if(!this.isPointerDown)
@@ -275,12 +280,14 @@ class Main
         this.moveEnd.x = loc.x;
         this.moveEnd.y = loc.y;
 
-        if(this.isPointerDown)
+        if(this.isPointerDrag)
         {
             this.audiolinetest.moveAudioDate(this.moveEnd.x- this.moveStart.x,0);
             this.audiolinetest.moveBG(loc.x- this.moveStart.x,0);
             this.isPointerDown = false;
+            this.isPointerDrag = false;
         }
+
 
 
     }
@@ -297,7 +304,23 @@ class Main
         console.log("m: " + _m + " s: " + _s);
         console.log("time: " + this.mousePosOnTimeline.x * this.framePerPixel);
 
+        if(this.isPointerDown)
+
+        {
+            this.isPointerDrag = true;
+        }
+
 // Use loc.x and loc.y here
+    }
+
+    public onDragStart =(event)=>
+    {
+        console.log("drag start!");
+    }
+
+    public onDragEnd =(event)=>
+    {
+        console.log("drag end!");
     }
 
 
@@ -467,21 +490,13 @@ class Main
 
             this.updateStartTime = new Date().getTime();
 
+
+
+                this.audioPlay();
+
+
             this.update();
 
-            //クラスとテキスト変更
-
-            if(this.audiolinetest.delay <= (this.playingTime)*60)
-            {
-
-
-                    this.audioPlay();
-                // this.audioSetTimeAndPlay();
-
-            } else
-            {
-                this.audioRestart();
-            }
 
             $('.play').removeClass('play').addClass('pause').val('PAUSE');
 
@@ -506,7 +521,7 @@ class Main
 
     public audioPlay =()=>
     {
-        this.audiolinetest.play();
+        this.audiolinetest.play(this.playTimeLine.x() * this.framePerPixel/60);
     }
 
     public resetTime =()=>
@@ -531,10 +546,21 @@ class Main
         this.updatePauseTime = new Date().getTime();
         this.isPause = true;
 
+
         this.playingTime +=  (new Date().getTime() - this.updateStartTime)/1000;
-        this.audiolinetest.pause();
+
+
+            this.audioPause();
+
 
     }
+
+    public audioPause =()=>
+    {
+
+        this.audiolinetest.pause();
+    }
+
 
 
 
@@ -609,11 +635,13 @@ class Main
                 }
 
             } else {
-                if (this.audiolinetest.isTimelineStart) {
+                if(this.audiolinetest.isTimelineStart) {
                     this.audioReset();
-
                 }
+                // this.audioReset();
             }
+
+
 
 
 
