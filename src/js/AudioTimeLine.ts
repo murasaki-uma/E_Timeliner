@@ -186,8 +186,9 @@ export default class AudioTimeLine {
     {
 
         this.initAudioSouce();
+        this.replayTime  =(time === undefined ? this.audioContext.currentTime : time-this.delay/60.0);
 
-        if (this.isPlayFirst) {
+        if (this.isPlayFirst && this.replayTime <= 0) {
             //スタート時間を変数startTimeに格納
 
             this.replayTime = 0;
@@ -195,12 +196,6 @@ export default class AudioTimeLine {
 
 
         } else {
-            //再スタート時間を変数replayTimeに格納
-
-            this.replayTime = this.audioContext.currentTime;
-            this.replayTime  =(time === undefined ? this.audioContext.currentTime : time-this.delay/60.0);
-            //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
-            // this.pausingTime += this.replayTime - this.pauseTime;
             this.isPause = false;
         }
 

@@ -284,10 +284,11 @@ class Main
         {
             this.audiolinetest.moveAudioDate(this.moveEnd.x- this.moveStart.x,0);
             this.audiolinetest.moveBG(loc.x- this.moveStart.x,0);
-            this.isPointerDown = false;
-            this.isPointerDrag = false;
+
         }
 
+        this.isPointerDown = false;
+        this.isPointerDrag = false;
 
 
     }

@@ -39789,17 +39789,13 @@ var AudioTimeLine = (function () {
         };
         this.play = function (time) {
             _this.initAudioSouce();
-            if (_this.isPlayFirst) {
+            _this.replayTime = (time === undefined ? _this.audioContext.currentTime : time - _this.delay / 60.0);
+            if (_this.isPlayFirst && _this.replayTime <= 0) {
                 //スタート時間を変数startTimeに格納
                 _this.replayTime = 0;
                 _this.isPlayFirst = false;
             }
             else {
-                //再スタート時間を変数replayTimeに格納
-                _this.replayTime = _this.audioContext.currentTime;
-                _this.replayTime = (time === undefined ? _this.audioContext.currentTime : time - _this.delay / 60.0);
-                //再スタートの時間からpauseした時間を引いて、停止されている時間の合計に足していく
-                // this.pausingTime += this.replayTime - this.pauseTime;
                 _this.isPause = false;
             }
             var playTime = _this.replayTime - _this.startTime - _this.pausingTime;
@@ -74802,9 +74798,9 @@ var Main = (function () {
             if (_this.isPointerDrag) {
                 _this.audiolinetest.moveAudioDate(_this.moveEnd.x - _this.moveStart.x, 0);
                 _this.audiolinetest.moveBG(loc.x - _this.moveStart.x, 0);
-                _this.isPointerDown = false;
-                _this.isPointerDrag = false;
             }
+            _this.isPointerDown = false;
+            _this.isPointerDrag = false;
         };
         this.onMouseMove = function (evt) {
             var loc = _this.getCursor(evt);
