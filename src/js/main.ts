@@ -235,10 +235,25 @@ class Main
     }
 
 
+
+
     public onPointerDown =(evt)=>
     {
 
+
+
         var loc= this.getCursor(evt);
+        //
+
+        this.playingTime = (loc.x * this.framePerPixel)/60;
+        this.calTimelineBar();
+
+        if(this.audiolinetest.delay <= (this.playingTime)*60) {
+
+            this.audiolinetest.isTimelineStart = true;
+        }
+
+
         if(!this.isPointerDown)
         {
             this.moveStart.x = loc.x;
@@ -281,6 +296,7 @@ class Main
         let _m = Math.floor (t % 3600 / 60);
         console.log("m: " + _m + " s: " + _s);
         console.log("time: " + this.mousePosOnTimeline.x * this.framePerPixel);
+
 // Use loc.x and loc.y here
     }
 
@@ -392,6 +408,7 @@ class Main
 
     }
 
+
     public calDuration()
     {
         this.durationFrameNums = this.duration_f + this.duration_s*this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
@@ -457,7 +474,9 @@ class Main
             if(this.audiolinetest.delay <= (this.playingTime)*60)
             {
 
+
                     this.audioPlay();
+                // this.audioSetTimeAndPlay();
 
             } else
             {
@@ -473,6 +492,11 @@ class Main
     public audioRestart =()=>
     {
         this.audiolinetest.restart();
+    }
+
+    public audioSetTimeAndPlay =()=>
+    {
+        this.audiolinetest.playOnSetTime((this.playTimeLine.x()*this.framePerPixel)/60);
     }
 
     public audioReset =()=>
@@ -579,6 +603,7 @@ class Main
                 if(!this.audiolinetest.isTimelineStart)
                 {
 
+                    // this.audioPlay();
                     this.audioPlay();
                     this.audiolinetest.isTimelineStart = true;
                 }

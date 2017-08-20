@@ -39770,7 +39770,7 @@ var AudioTimeLine = (function () {
             var value = document.getElementById("volume").value / 100.0;
             _this.audioGainNode.gain.value = value;
         };
-        this.play = function () {
+        this.initAudioSouce = function () {
             _this.audioSouce = _this.audioContext.createBufferSource();
             //bufferプロパティにAudioBufferインスタンスを設定
             _this.audioSouce.buffer = _this.audioBuffer;
@@ -39785,6 +39785,9 @@ var AudioTimeLine = (function () {
             //GainNodeをAudioDestinationNodeに接続
             _this.audioGainNode.connect(_this.audioContext.destination);
             _this.audioGainNode.gain.value = -0.4;
+        };
+        this.play = function () {
+            _this.initAudioSouce();
             if (_this.isPlayFirst) {
                 //スタート時間を変数startTimeに格納
                 _this.startTime = _this.audioContext.currentTime;
@@ -39803,7 +39806,16 @@ var AudioTimeLine = (function () {
             var playTime = _this.replayTime - _this.startTime - _this.pausingTime;
             _this.audioSouce.start(0, playTime);
         };
+        this.playOnSetTime = function (playTime) {
+            if (_this.isPlayFirst) {
+                _this.isPlayFirst = false;
+            }
+            _this.reset();
+            _this.initAudioSouce();
+            _this.audioSouce.start(0, playTime - _this.delay * _this.delay / 60);
+        };
         this.pause = function () {
+            // this.initAudioSouce();
             _this.pauseTime = _this.audioContext.currentTime;
             _this.audioSouce.stop(0);
             _this.isPause = true;
@@ -39827,6 +39839,7 @@ var AudioTimeLine = (function () {
                 if (arrayBuffer instanceof ArrayBuffer) {
                     var successCallback = function (audioBuffer) {
                         _this.audioBuffer = audioBuffer;
+                        _this.initAudioSouce();
                         // this.svg.size(audioBuffer.duration*60*this.pixelPerFrame,100);
                         _this.svg_BG.size(audioBuffer.duration * 60 * _this.pixelPerFrame, 100).fill({ color: "#2196F3", opacity: 0.5 });
                         _this.startX = _this.delay * _this.pixelPerFrame;
@@ -74766,6 +74779,12 @@ var Main = (function () {
         };
         this.onPointerDown = function (evt) {
             var loc = _this.getCursor(evt);
+            //
+            _this.playingTime = (loc.x * _this.framePerPixel) / 60;
+            _this.calTimelineBar();
+            if (_this.audiolinetest.delay <= (_this.playingTime) * 60) {
+                _this.audiolinetest.isTimelineStart = true;
+            }
             if (!_this.isPointerDown) {
                 _this.moveStart.x = loc.x;
                 _this.moveStart.y = loc.y;
@@ -74887,6 +74906,7 @@ var Main = (function () {
                 //クラスとテキスト変更
                 if (_this.audiolinetest.delay <= (_this.playingTime) * 60) {
                     _this.audioPlay();
+                    // this.audioSetTimeAndPlay();
                 }
                 else {
                     _this.audioRestart();
@@ -74896,6 +74916,9 @@ var Main = (function () {
         };
         this.audioRestart = function () {
             _this.audiolinetest.restart();
+        };
+        this.audioSetTimeAndPlay = function () {
+            _this.audiolinetest.playOnSetTime((_this.playTimeLine.x() * _this.framePerPixel) / 60);
         };
         this.audioReset = function () {
             _this.audiolinetest.reset();
@@ -74954,6 +74977,7 @@ var Main = (function () {
                 if (_this.audiolinetest.delay <= (_this.playingTime + dTime) * 60) {
                     console.log("audio play!!");
                     if (!_this.audiolinetest.isTimelineStart) {
+                        // this.audioPlay();
                         _this.audioPlay();
                         _this.audiolinetest.isTimelineStart = true;
                     }

@@ -64,6 +64,7 @@ export default class AudioTimeLine {
 
 
                         this.audioBuffer = audioBuffer;
+                        this.initAudioSouce();
 
                         // this.svg.size(audioBuffer.duration*60*this.pixelPerFrame,100);
                         this.svg_BG.size(audioBuffer.duration*60*this.pixelPerFrame,100).fill({color:"#2196F3",opacity:0.5});
@@ -123,6 +124,7 @@ export default class AudioTimeLine {
 
                     this.audioContext.decodeAudioData(arrayBuffer, successCallback, errorCallback);
 
+
                 }
             }
         };
@@ -159,8 +161,7 @@ export default class AudioTimeLine {
         this.audioGainNode.gain.value = value;
     }
 
-
-    public play =()=>
+    public initAudioSouce =()=>
     {
         this.audioSouce = this.audioContext.createBufferSource();
         //bufferプロパティにAudioBufferインスタンスを設定
@@ -177,7 +178,12 @@ export default class AudioTimeLine {
         //GainNodeをAudioDestinationNodeに接続
         this.audioGainNode.connect(this.audioContext.destination);
         this.audioGainNode.gain.value = -0.4;
+    }
 
+
+    public play =()=>
+    {
+        this.initAudioSouce();
 
         if (this.isPlayFirst) {
             //スタート時間を変数startTimeに格納
@@ -202,6 +208,18 @@ export default class AudioTimeLine {
 
     }
 
+    public playOnSetTime =(playTime)=>
+    {
+        if (this.isPlayFirst) {
+
+            this.isPlayFirst = false;
+        }
+
+        this.reset();
+        this.initAudioSouce();
+        this.audioSouce.start(0,playTime-this.delay*this.delay/60);
+    }
+
     public restart()
     {
         this.isPlayFirst = true;
@@ -223,6 +241,7 @@ export default class AudioTimeLine {
 
     public pause = () =>
     {
+        // this.initAudioSouce();
         this.pauseTime = this.audioContext.currentTime;
         this.audioSouce.stop(0);
         this.isPause = true;
