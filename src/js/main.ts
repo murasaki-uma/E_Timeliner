@@ -127,6 +127,12 @@ class Main
         this.timelineQuery.addEventListener('dragstart',this.onDragStart,false);
         this.timelineQuery.addEventListener('dragend',this.onDragEnd,false);
         $(".durationValues").on('input',this.onDurationChange);
+        $("#save").on('click',this.ExportJSON);
+        $("#load").on('click',this.InportJSON);
+        // キーボードを押したときに実行されるイベント
+        document.addEventListener("keydown" , this.onKeyDown);
+
+
 
 
         this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.pixelPerFrame,this.framePerPixel,this.timeline.width);
@@ -136,6 +142,32 @@ class Main
 
     }
 
+    public onKeyDown =(evt:KeyboardEvent)=>
+    {
+        // console.log(evt);
+        // let isS =false;
+        // let isMeta = false;
+        // if(evt.key == "s")
+        // {
+        //
+        // }
+    }
+
+    public ExportJSON =()=>
+
+    {
+        this.oscFragTimeLine.exportJSON();
+    }
+
+    public InportJSON =()=>
+    {
+        $.getJSON("fragValues.json" , (data)=> {
+            console.log(data);
+                this.oscFragTimeLine.addFlagByJSON(data,this.framePerPixel,this.pixelPerFrame);
+
+        });
+
+    }
     public restart =()=>
     {
         this.updateStartTime = 0;
@@ -233,7 +265,7 @@ class Main
     public addOsc =(evt)=>
     {
 
-        this.oscFragTimeLine.addOsc(evt,this.mousePosOnTimeline,this.framePerPixel,this.pixelPerFrame);
+        this.oscFragTimeLine.addOsc(evt.button,this.mousePosOnTimeline,this.framePerPixel,this.pixelPerFrame);
         // o
 
     }

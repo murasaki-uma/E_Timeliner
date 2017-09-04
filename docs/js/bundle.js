@@ -39935,10 +39935,8 @@ var OscFragTimeLine = (function () {
         var _this = this;
         this.oscFrags = [];
         this.isReadyDoubleClick = false;
-        this.addOsc = function (evt, mousePosOnTimeline, framePerPixel, pixelPerFrame) {
-            console.log("onMouseUp");
-            console.log(evt);
-            if (evt.button == 0) {
+        this.addOsc = function (button, mousePosOnTimeline, framePerPixel, pixelPerFrame) {
+            if (button == 0) {
                 var selectNum = 0;
                 if (_this.oscFrags.length > 0) {
                     var isCheck = false;
@@ -39985,9 +39983,10 @@ var OscFragTimeLine = (function () {
                         _this.oscFrags.push(f);
                     }
                 }
+                console.log(mousePosOnTimeline);
                 _this.isReadyDoubleClick = false;
             }
-            if (evt.button == 1) {
+            if (button == 1) {
                 for (var i = 0; i < _this.oscFrags.length; i++) {
                     if (_this.oscFrags[i].frag.x() + _this.oscFrags[i].width > mousePosOnTimeline.x && _this.oscFrags[i].frag.x() <= mousePosOnTimeline.x) {
                         _this.oscFrags[i].frag.remove();
@@ -40006,6 +40005,18 @@ var OscFragTimeLine = (function () {
                 _this.isReadyDoubleClick = false;
             }, 300);
         };
+        this.addFlagByJSON = function (data, framePerPixel, pixelPerFrame) {
+            for (var i = 0; i < data.length; i++) {
+                var frag = _this.timeline.container.rect(0, _this.timeline.height - _this.lineWidth).move(data[i].x, _this.lineWidth / 2).fill({ color: "rgba(13, 71, 161,0.5)" }).stroke({
+                    color: '#0d47a1',
+                    opacity: 1.0,
+                    width: 0
+                });
+                console.log(frag);
+                var f = new __WEBPACK_IMPORTED_MODULE_1__OscFlag__["a" /* default */](frag, data[i], pixelPerFrame, framePerPixel);
+                _this.oscFrags.push(f);
+            }
+        };
         this.timeline = timeline;
         this.lineWidth = lineWidth;
     }
@@ -40022,6 +40033,28 @@ var OscFragTimeLine = (function () {
         }
         if (oscNum == 0) {
             __WEBPACK_IMPORTED_MODULE_0_jquery__(".flagValueDebug").text("");
+        }
+    };
+    OscFragTimeLine.prototype.exportJSON = function () {
+        console.log("export start");
+        var data = [];
+        var i = 0;
+        while (i < this.oscFrags.length) {
+            console.log(this.oscFrags[i].mousePosOnTimeline);
+            data.push(this.oscFrags[i].mousePosOnTimeline);
+            i++;
+            if (i == this.oscFrags.length) {
+                var data = JSON.stringify(data);
+                var a = document.createElement('a');
+                a.textContent = 'export';
+                a.download = 'fragValues.json';
+                var blob = new Blob([data], { type: 'text/plain' });
+                a.href = window.URL.createObjectURL(blob);
+                a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
+                var exportLink = document.getElementById('export-link');
+                exportLink.appendChild(a);
+                console.log("export end");
+            }
         }
     };
     return OscFragTimeLine;
@@ -74839,8 +74872,11 @@ var OscFrag = (function () {
             _this.isSelected = false;
             _this.frag.stroke({ opacity: 0.0 });
         };
+        // console.log("x: "+mousePosOnTImeline.x);
+        // console.log("y: "+mousePosOnTImeline.y);
         this.frag = frag;
-        this.mousePosOnTimeline = mousePosOnTImeline;
+        this.mousePosOnTimeline.x = mousePosOnTImeline.x;
+        this.mousePosOnTimeline.y = mousePosOnTImeline.y;
         this.time = this.mousePosOnTimeline.x * framePerPixel;
         this.framePerPixel = framePerPixel;
         this.pixelPerFrame = pixelPerFrame;
@@ -74914,6 +74950,24 @@ var Main = (function () {
         this.moveStart = { x: 0, y: 0 };
         this.moveEnd = { x: 0, y: 0 };
         this.dTime = 0;
+        this.onKeyDown = function (evt) {
+            // console.log(evt);
+            // let isS =false;
+            // let isMeta = false;
+            // if(evt.key == "s")
+            // {
+            //
+            // }
+        };
+        this.ExportJSON = function () {
+            _this.oscFragTimeLine.exportJSON();
+        };
+        this.InportJSON = function () {
+            __WEBPACK_IMPORTED_MODULE_1_jquery__["getJSON"]("fragValues.json", function (data) {
+                console.log(data);
+                _this.oscFragTimeLine.addFlagByJSON(data, _this.framePerPixel, _this.pixelPerFrame);
+            });
+        };
         this.restart = function () {
             _this.updateStartTime = 0;
             _this.updateStopTime = 0;
@@ -74972,7 +75026,7 @@ var Main = (function () {
             console.log("drag end!");
         };
         this.addOsc = function (evt) {
-            _this.oscFragTimeLine.addOsc(evt, _this.mousePosOnTimeline, _this.framePerPixel, _this.pixelPerFrame);
+            _this.oscFragTimeLine.addOsc(evt.button, _this.mousePosOnTimeline, _this.framePerPixel, _this.pixelPerFrame);
             // o
         };
         this.onDurationChange = function () {
@@ -75064,6 +75118,10 @@ var Main = (function () {
         this.timelineQuery.addEventListener('dragstart', this.onDragStart, false);
         this.timelineQuery.addEventListener('dragend', this.onDragEnd, false);
         __WEBPACK_IMPORTED_MODULE_1_jquery__(".durationValues").on('input', this.onDurationChange);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#save").on('click', this.ExportJSON);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__("#load").on('click', this.InportJSON);
+        // キーボードを押したときに実行されるイベント
+        document.addEventListener("keydown", this.onKeyDown);
         this.audiolinetest = new __WEBPACK_IMPORTED_MODULE_4__AudioTimeLine__["a" /* default */]("sound/sample.mp3", this.pixelPerFrame, this.framePerPixel, this.timeline.width);
         this.update();
     };

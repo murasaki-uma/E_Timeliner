@@ -14,12 +14,11 @@ export default class OscFragTimeLine
         this.lineWidth = lineWidth;
     }
 
-    public addOsc =(evt:MouseEvent, mousePosOnTimeline:{x:number,y:number},framePerPixel:number,pixelPerFrame:number)=>
+    public addOsc =(button:number, mousePosOnTimeline:{x:number,y:number},framePerPixel:number,pixelPerFrame:number)=>
     {
-        console.log("onMouseUp");
-        console.log(evt);
 
-        if(evt.button == 0)
+
+        if(button == 0)
         {
 
             let selectNum = 0;
@@ -45,7 +44,6 @@ export default class OscFragTimeLine
                         $("#sendingFrames").addClass("edit");
 
                     }
-
 
                 }
 
@@ -84,11 +82,12 @@ export default class OscFragTimeLine
                 }
 
             }
+            console.log(mousePosOnTimeline);
 
             this.isReadyDoubleClick = false;
         }
 
-        if(evt.button == 1)
+        if(button == 1)
         {
             for(let i = 0; i < this.oscFrags.length; i++)
             {
@@ -99,7 +98,6 @@ export default class OscFragTimeLine
                 }
             }
         }
-
 
         // シングルクリックを受理、300ms間だけダブルクリック判定を残す
         this.isReadyDoubleClick = true;
@@ -113,6 +111,21 @@ export default class OscFragTimeLine
             this.isReadyDoubleClick = false;
         }, 300);
 
+    }
+
+    public addFlagByJSON =(data:any,framePerPixel,pixelPerFrame)=>
+    {
+        for(let i = 0; i < data.length; i++)
+        {
+            let frag = this.timeline.container.rect(0, this.timeline.height - this.lineWidth).move(data[i].x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                color: '#0d47a1',
+                opacity: 1.0,
+                width: 0
+            });
+            console.log(frag);
+            let f = new OscFrag(frag, data[i], pixelPerFrame,framePerPixel);
+            this.oscFrags.push(f);
+        }
     }
 
     public update(playingTime:number,dTime:number)
@@ -134,6 +147,41 @@ export default class OscFragTimeLine
         {
             $(".flagValueDebug").text("");
         }
+
+
+    }
+
+    public exportJSON()
+    {
+        console.log("export start");
+        let data = [];
+        let i = 0;
+        while(i < this.oscFrags.length)
+        {
+            console.log(this.oscFrags[i].mousePosOnTimeline);
+            data.push(this.oscFrags[i].mousePosOnTimeline);
+            i++;
+
+            if(i == this.oscFrags.length)
+            {
+                var data = JSON.stringify(data);
+                var a = document.createElement('a');
+                a.textContent = 'export';
+                a.download = 'fragValues.json';
+                let blob = new Blob([data], { type: 'text/plain' });
+                a.href = window.URL.createObjectURL(blob);
+                a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
+
+                var exportLink = document.getElementById('export-link');
+                exportLink.appendChild(a);
+                console.log("export end");
+            }
+
+        }
+
+
+
+
 
     }
 }

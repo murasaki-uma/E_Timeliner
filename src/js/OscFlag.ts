@@ -14,11 +14,13 @@ export default class OscFrag
 
 
 
-    constructor(frag:SVG.Rect, mousePosOnTImeline:{x,y}, pixelPerFrame:number,framePerPixel:number)
+    constructor(frag:SVG.Rect, mousePosOnTImeline:any, pixelPerFrame:number,framePerPixel:number)
     {
+        // console.log("x: "+mousePosOnTImeline.x);
+        // console.log("y: "+mousePosOnTImeline.y);
         this.frag = frag;
-        this.mousePosOnTimeline = mousePosOnTImeline;
-
+        this.mousePosOnTimeline.x = mousePosOnTImeline.x;
+        this.mousePosOnTimeline.y = mousePosOnTImeline.y;
         this.time  = this.mousePosOnTimeline.x * framePerPixel;
         this.framePerPixel = framePerPixel;
         this.pixelPerFrame = pixelPerFrame;
