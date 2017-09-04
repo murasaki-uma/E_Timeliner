@@ -1,3 +1,4 @@
+import OscFragTimeLine from "./OscFlagTimeLine";
 declare function require(x: string): any;
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
@@ -59,7 +60,7 @@ class Main
     public fragWidth:number = 6;
     public mousePosOnTimeline:any = {x:0,y:0};
 
-    public oscFrags:OscFlag[] = [];
+    public oscFragTimeLine:OscFragTimeLine;
 
     public isReadyDoubleClick:boolean = false;
 
@@ -86,6 +87,7 @@ class Main
     {
 
         this.timeline = new TimeLine(window.innerWidth*0.9,300);
+        this.oscFragTimeLine = new OscFragTimeLine(this.timeline,this.lineWidth);
 
 
         console.log($('#min').val());
@@ -229,104 +231,8 @@ class Main
     public addOsc =(evt)=>
     {
 
-        console.log("onMouseUp");
-        console.log(evt);
-
-
-        if(evt.button == 0)
-        {
-
-            let selectNum = 0;
-
-            if(this.oscFrags.length > 0 )
-            {
-
-                let isCheck = false;
-                for(let i = 0; i < this.oscFrags.length; i++) {
-                    if(this.oscFrags[i].isSelected)
-                    {
-                        this.oscFrags[i].setInputValues();
-                    }
-                    this.oscFrags[i].diselect();
-                    if (this.oscFrags[i].frag.x() + this.oscFrags[i].width > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
-                    {
-
-                        console.log("flag select")
-                        isCheck = true;
-                        this.oscFrags[i].select();
-                        selectNum ++;
-                        $(".inputFlagValue").addClass("edit");
-                        $("#sendingFrames").addClass("edit");
-
-                    }
-
-
-                }
-
-                if(!isCheck && this.isReadyDoubleClick)
-                {
-                    let frag = this.timeline.container.rect(this.fragWidth, this.timeline.height - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
-                        color: '#0d47a1',
-                        opacity: 1.0,
-                        width: 0
-                    });
-
-                    console.log(frag);
-                    let f = new OscFlag(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
-                    this.oscFrags.push(f);
-                }
-
-                if(selectNum == 0)
-                {
-                    $(".inputFlagValue").removeClass("edit");
-                    $('#sendingFrames').removeClass("edit");
-                    $(".inputFlagValue").val("");
-                    $('#sendingFrames').val("");
-                }
-            } else
-            {
-                if(this.isReadyDoubleClick) {
-
-                    let frag = this.timeline.container.rect(this.fragWidth, this.timeline.height - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
-                        color: '#0d47a1',
-                        opacity: 1.0,
-                        width: 0
-                    });
-                    console.log(frag);
-                    let f = new OscFlag(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
-                    this.oscFrags.push(f);
-                }
-
-            }
-
-            this.isReadyDoubleClick = false;
-        }
-
-        if(evt.button == 1)
-        {
-            for(let i = 0; i < this.oscFrags.length; i++)
-            {
-                if(this.oscFrags[i].frag.x()+this.oscFrags[i].width > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
-                {
-                    this.oscFrags[i].frag.remove();
-                    this.oscFrags.splice(i,1);
-                }
-            }
-        }
-
-
-        // シングルクリックを受理、300ms間だけダブルクリック判定を残す
-        this.isReadyDoubleClick = true;
-        setTimeout( ()=> {
-            // ダブルクリックによりclickedフラグがリセットされていない
-            //     -> シングルクリックだった
-            if (this.isReadyDoubleClick) {
-                // alert("single click!");
-            }
-
-            this.isReadyDoubleClick = false;
-        }, 300);
-
+        this.oscFragTimeLine.addOsc(evt,this.mousePosOnTimeline,this.framePerPixel,this.pixelPerFrame);
+        // o
 
     }
 
@@ -477,24 +383,7 @@ class Main
             let h = Math.floor( (this.playingTime+dTime) / 3600);;
             $('.timeline_h').text(h);
 
-            let oscNum = 0;
-            for(let i = 0; i < this.oscFrags.length; i++)
-            {
-                let fragtime = this.oscFrags[i].time;
-                let fragtime_floored = Math.floor(fragtime);
-                let frameNum = fragtime - fragtime_floored;
-                if((this.playingTime+dTime)*60 > fragtime && (this.playingTime+dTime)*60 < fragtime+this.oscFrags[i].sendingOscTime )
-                {
-                    $(".flagValueDebug").text(JSON.stringify(this.oscFrags[i].values));
-                    oscNum++;
-                }
-            }
-
-            if(oscNum == 0)
-            {
-                $(".flagValueDebug").text("");
-            }
-
+            this.oscFragTimeLine.update(this.playingTime,dTime);
 
             if(this.audiolinetest.delay <= (this.playingTime+dTime)*60)
             {

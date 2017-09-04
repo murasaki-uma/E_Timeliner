@@ -2,7 +2,7 @@ import * as SVG from 'svg.js';
 import * as $ from "jquery";
 import OscFlag from './OscFlag'
 import TimeLine from "./TimeLine";
-export default class OscFlagTimeLine
+export default class OscFragTimeLine
 {
     public oscFrags:OscFlag[] = [];
     public isReadyDoubleClick:boolean = false;
@@ -112,6 +112,28 @@ export default class OscFlagTimeLine
 
             this.isReadyDoubleClick = false;
         }, 300);
+
+    }
+
+    public update(playingTime:number,dTime:number)
+    {
+        let oscNum = 0;
+        for(let i = 0; i < this.oscFrags.length; i++)
+        {
+            let fragtime = this.oscFrags[i].time;
+            let fragtime_floored = Math.floor(fragtime);
+            let frameNum = fragtime - fragtime_floored;
+            if((playingTime+dTime)*60 > fragtime && (playingTime+dTime)*60 < fragtime+this.oscFrags[i].sendingOscTime )
+            {
+                $(".flagValueDebug").text(JSON.stringify(this.oscFrags[i].values));
+                oscNum++;
+            }
+        }
+
+        if(oscNum == 0)
+        {
+            $(".flagValueDebug").text("");
+        }
 
     }
 }
