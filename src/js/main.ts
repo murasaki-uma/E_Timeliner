@@ -12,11 +12,8 @@ class Main
 
 
     private timeline:TimeLine;
-    private timelineScale:SVG.Container;
     private startTime:number = 0;
 
-    public timelineWidth:number = window.innerWidth*0.9;
-    public timelineHeight:number = 300;
     public lineWidth:number = 2;
     public selectedLine:SVG.Rect;
     public timelineQuery:any;
@@ -83,15 +80,12 @@ class Main
         $("#restartButton").on('click',this.restart);
 
 
-
-
         this.init();
     }
     public init()
     {
 
-        this.timeline = new TimeLine(this.timelineWidth,this.timelineHeight);
-        this.timelineScale = SVG('timelineScale').size(this.timelineWidth,this.timelineHeight);
+        this.timeline = new TimeLine(window.innerWidth*0.9,300);
 
 
         console.log($('#min').val());
@@ -106,16 +100,16 @@ class Main
         let polyline = this.timeline.container.polyline
             ([
                 this.lineWidth/2,this.lineWidth/2,
-                this.lineWidth/2,this.timelineHeight-this.lineWidth/2,
-                this.timelineWidth-this.lineWidth/2, this.timelineHeight-this.lineWidth/2,
-                this.timelineWidth-this.lineWidth/2,this.lineWidth/2,
+                this.lineWidth/2,this.timeline.height-this.lineWidth/2,
+                this.timeline.width-this.lineWidth/2, this.timeline.height-this.lineWidth/2,
+                this.timeline.width-this.lineWidth/2,this.lineWidth/2,
                 this.lineWidth/2,this.lineWidth/2
             ]);
         polyline.fill('none');
         polyline.stroke({color:'#616161',width:this.lineWidth});
 
-        this.playTimeLine = this.timeline.container.rect(this.lineWidth,this.timelineHeight-this.lineWidth).move(1,this.lineWidth/2).fill('#616161');
-        this.selectedLine = this.timeline.container.rect(this.lineWidth,this.timelineHeight-this.lineWidth).move(1,this.lineWidth/2).fill('#ff0066');
+        this.playTimeLine = this.timeline.container.rect(this.lineWidth,this.timeline.height-this.lineWidth).move(1,this.lineWidth/2).fill('#616161');
+        this.selectedLine = this.timeline.container.rect(this.lineWidth,this.timeline.height-this.lineWidth).move(1,this.lineWidth/2).fill('#ff0066');
 
         this.xhr = new XMLHttpRequest();
 
@@ -160,10 +154,7 @@ class Main
     public onPointerDown =(evt)=>
     {
 
-
-
         var loc= this.getCursor(evt,this.timelineQuery);
-        //
 
         this.playingTime = (loc.x * this.framePerPixel)/60;
         this.updateStartTime = new Date().getTime();
@@ -222,7 +213,6 @@ class Main
             this.isPointerDrag = true;
         }
 
-// Use loc.x and loc.y here
     }
 
     public onDragStart =(event)=>
@@ -241,9 +231,6 @@ class Main
 
         console.log("onMouseUp");
         console.log(evt);
-
-
-
 
 
         if(evt.button == 0)
@@ -278,7 +265,7 @@ class Main
 
                 if(!isCheck && this.isReadyDoubleClick)
                 {
-                    let frag = this.timeline.container.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                    let frag = this.timeline.container.rect(this.fragWidth, this.timeline.height - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
                         color: '#0d47a1',
                         opacity: 1.0,
                         width: 0
@@ -300,7 +287,7 @@ class Main
             {
                 if(this.isReadyDoubleClick) {
 
-                    let frag = this.timeline.container.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                    let frag = this.timeline.container.rect(this.fragWidth, this.timeline.height - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
                         color: '#0d47a1',
                         opacity: 1.0,
                         width: 0
