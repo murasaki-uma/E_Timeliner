@@ -2,88 +2,24 @@ declare function require(x: string): any;
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
 import * as Math from "mathjs";
+import OscFlag from './OscFlag';
+import TimeLine from './TimeLine';
 import AudioTimeLine from "./AudioTimeLine";
-
-
-class FlagValues
-{
-    public frag:SVG.Rect;
-    public values:any = {name:"value"};
-    public isSelected:boolean = false;
-    public sendingOscTime:number = 30;
-    public time:number = 0;
-    public width:number = 4;
-    public pixelPerFrame:number = 0.1;
-
-
-    constructor(frag:SVG.Rect, time:number, pixelPerFrame:number)
-    {
-        this.frag = frag;
-        this.time = time;
-        this.pixelPerFrame = pixelPerFrame;
-
-        // this.frag.id()
-
-        // $("#" + this.frag.id()).on('click',this.select());
-
-    }
-
-    public select =()=>
-    {
-
-        console.log(this.frag.id());
-        this.isSelected = true;
-        this.frag.stroke({
-            color: '#0d47a1',
-            opacity: 1.0,
-            width: 2
-        });
-        $(".inputFlagValue").val(JSON.stringify(this.values));
-        $("#sendingFrames").val(this.sendingOscTime);
-
-
-
-    }
-
-    public diselect =()=>
-    {
-        this.isSelected = false;
-        this.frag.stroke({opacity:0.0});
-
-
-    }
-
-    public setInputValues()
-    {
-
-        this.values = JSON.parse( $(".inputFlagValue").val());
-        this.sendingOscTime = Number($("#sendingFrames").val());
-        this.frag.width(this.sendingOscTime * this.pixelPerFrame);
-        this.width = this.sendingOscTime * this.pixelPerFrame;
-        // $(".inputFlagValue").addClass("hide");
-        // $(".flagValueDebug").removeClass("hide");
-    }
-}
 
 class Main
 {
     public xhr:XMLHttpRequest;
-    public audioContext:AudioContext;
-    public audioBuffers:AudioBuffer[] = [];
-    public audioSouce:AudioBufferSourceNode;
-    public audioGainNode:any;
-    private timeline:SVG.Container;
+
+
+    private timeline:TimeLine;
     private timelineScale:SVG.Container;
     private startTime:number = 0;
-    private replayTime:number = 0;
-
-    private pauseTime:number = 0;
 
     public timelineWidth:number = window.innerWidth*0.9;
     public timelineHeight:number = 300;
     public lineWidth:number = 2;
-    public selectedLine:SVG.Line;
-    public svg_timeline:any;
+    public selectedLine:SVG.Rect;
+    public timelineQuery:any;
 
     public playTimeLine:SVG.Rect;
 
@@ -126,13 +62,13 @@ class Main
     public fragWidth:number = 6;
     public mousePosOnTimeline:any = {x:0,y:0};
 
-    public oscFrags:FlagValues[] = [];
+    public oscFrags:OscFlag[] = [];
 
     public isReadyDoubleClick:boolean = false;
 
     public isAudioDraggable:boolean = false;
 
-    public audiolinetest:AudioTImeLIne;
+    public audiolinetest:AudioTimeLine;
     public isPointerDown = false;
     public isPointerDrag:boolean = false;
 
@@ -154,7 +90,7 @@ class Main
     public init()
     {
 
-        this.timeline = SVG('timeline').size(this.timelineWidth,this.timelineHeight);
+        this.timeline = new TimeLine(this.timelineWidth,this.timelineHeight);
         this.timelineScale = SVG('timelineScale').size(this.timelineWidth,this.timelineHeight);
 
 
@@ -167,7 +103,7 @@ class Main
 
 
 
-        let polyline = this.timeline.polyline
+        let polyline = this.timeline.container.polyline
             ([
                 this.lineWidth/2,this.lineWidth/2,
                 this.lineWidth/2,this.timelineHeight-this.lineWidth/2,
@@ -178,34 +114,24 @@ class Main
         polyline.fill('none');
         polyline.stroke({color:'#616161',width:this.lineWidth});
 
-        this.playTimeLine = this.timeline.rect(this.lineWidth,this.timelineHeight-this.lineWidth).move(1,this.lineWidth/2).fill('#616161');
-        this.selectedLine = this.timeline.rect(this.lineWidth,this.timelineHeight-this.lineWidth).move(1,this.lineWidth/2).fill('#f06');
+        this.playTimeLine = this.timeline.container.rect(this.lineWidth,this.timelineHeight-this.lineWidth).move(1,this.lineWidth/2).fill('#616161');
+        this.selectedLine = this.timeline.container.rect(this.lineWidth,this.timelineHeight-this.lineWidth).move(1,this.lineWidth/2).fill('#ff0066');
 
         this.xhr = new XMLHttpRequest();
-        this.audioContext = new AudioContext();
 
+        this.timelineQuery = document.querySelector('#'+this.timeline.container.id());
 
-
-
-
-
-
-
-        this.svg_timeline = document.querySelector('#'+this.timeline.id());
-
-
-        this.svg_timeline.addEventListener('mousemove',this.onMouseMove,false);
-        this.svg_timeline.addEventListener('pointerdown',this.onPointerDown,false);
-        this.svg_timeline.addEventListener('pointerup',this.onPointerUp,false);
-        this.svg_timeline.addEventListener('mousemove',this.onMouseMove,false);
-        this.svg_timeline.addEventListener('mouseup',this.addOsc,false);
-        this.svg_timeline.addEventListener('dragstart',this.onDragStart,false);
-        this.svg_timeline.addEventListener('dragend',this.onDragEnd,false);
+        this.timelineQuery.addEventListener('mousemove',this.onMouseMove,false);
+        this.timelineQuery.addEventListener('pointerdown',this.onPointerDown,false);
+        this.timelineQuery.addEventListener('pointerup',this.onPointerUp,false);
+        this.timelineQuery.addEventListener('mousemove',this.onMouseMove,false);
+        this.timelineQuery.addEventListener('mouseup',this.addOsc,false);
+        this.timelineQuery.addEventListener('dragstart',this.onDragStart,false);
+        this.timelineQuery.addEventListener('dragend',this.onDragEnd,false);
         $(".durationValues").on('input',this.onDurationChange);
 
 
-
-        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.pixelPerFrame,this.framePerPixel,this.timeline.width());
+        this.audiolinetest = new AudioTimeLine("sound/sample.mp3",this.pixelPerFrame,this.framePerPixel,this.timeline.width);
 
         this.update();
 
@@ -226,17 +152,8 @@ class Main
     public calTimelineBar()
     {
         let per = ((this.playingTime)*60) / this.durationFrameNums;
-        this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
+        this.playTimeLine.move(this.timeline.width*per,this.lineWidth/2);
     }
-
-    public onFlagEdited =()=>
-    {
-        for(let i = 0; i < this.oscFrags.length; i++)
-        {
-
-        }
-    }
-
 
 
 
@@ -245,19 +162,13 @@ class Main
 
 
 
-        var loc= this.getCursor(evt);
+        var loc= this.getCursor(evt,this.timelineQuery);
         //
 
         this.playingTime = (loc.x * this.framePerPixel)/60;
         this.updateStartTime = new Date().getTime();
         this.calTimelineBar();
         this.pause();
-        // this.audioPlay();
-
-
-
-
-
 
         if(!this.isPointerDown)
         {
@@ -276,7 +187,7 @@ class Main
     public onPointerUp =(evt)=>
     {
         console.log("up");
-        var loc= this.getCursor(evt);
+        var loc= this.getCursor(evt,this.timelineQuery);
         this.moveEnd.x = loc.x;
         this.moveEnd.y = loc.y;
 
@@ -294,7 +205,7 @@ class Main
     }
     public onMouseMove =(evt)=>
     {
-        var loc= this.getCursor(evt);
+        var loc= this.getCursor(evt,this.timelineQuery);
         this.mousePosOnTimeline.x = loc.x;
         this.mousePosOnTimeline.y = loc.y;
         this.selectedLine.move(loc.x+this.lineWidth/2,this.lineWidth/2);
@@ -353,27 +264,28 @@ class Main
                     if (this.oscFrags[i].frag.x() + this.oscFrags[i].width > this.mousePosOnTimeline.x && this.oscFrags[i].frag.x() <= this.mousePosOnTimeline.x)
                     {
 
+                        console.log("flag select")
                         isCheck = true;
                         this.oscFrags[i].select();
                         selectNum ++;
                         $(".inputFlagValue").addClass("edit");
                         $("#sendingFrames").addClass("edit");
 
-                        // $(".flagValueDebug").addClass("hide");
                     }
 
 
                 }
+
                 if(!isCheck && this.isReadyDoubleClick)
                 {
-                    let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                    let frag = this.timeline.container.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
                         color: '#0d47a1',
                         opacity: 1.0,
                         width: 0
                     });
 
                     console.log(frag);
-                    let f = new FlagValues(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
+                    let f = new OscFlag(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
                     this.oscFrags.push(f);
                 }
 
@@ -383,19 +295,18 @@ class Main
                     $('#sendingFrames').removeClass("edit");
                     $(".inputFlagValue").val("");
                     $('#sendingFrames').val("");
-                    // $(".flagValueDebug").removeClass("hide");
                 }
             } else
             {
                 if(this.isReadyDoubleClick) {
 
-                    let frag = this.timeline.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
+                    let frag = this.timeline.container.rect(this.fragWidth, this.timelineHeight - this.lineWidth).move(this.mousePosOnTimeline.x, this.lineWidth / 2).fill({color: "rgba(13, 71, 161,0.5)"}).stroke({
                         color: '#0d47a1',
                         opacity: 1.0,
                         width: 0
                     });
                     console.log(frag);
-                    let f = new FlagValues(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
+                    let f = new OscFlag(frag, this.mousePosOnTimeline.x * this.framePerPixel, this.pixelPerFrame);
                     this.oscFrags.push(f);
                 }
 
@@ -437,9 +348,9 @@ class Main
     {
         this.durationFrameNums = this.duration_f + this.duration_s*this.fps + this.duration_m * 60 * this.fps + this.duration_h * 60 * 60 * this.fps;
         console.log(this.durationFrameNums);
-        this.framePerPixel =  this.durationFrameNums/this.timeline.width();
+        this.framePerPixel =  this.durationFrameNums/this.timeline.width;
         console.log("frameperpixel: " + this.framePerPixel);
-        this.pixelPerFrame = this.timeline.width()/this.durationFrameNums;
+        this.pixelPerFrame = this.timeline.width/this.durationFrameNums;
         console.log("pixelPerFrame: " + this.pixelPerFrame);
     }
 
@@ -450,16 +361,14 @@ class Main
 
     public onWindowResize()
     {
-        // this.audioScale.x = this.timeline.width();
-
 
     }
 
-    public getCursor(evt) {
-        var pt=this.svg_timeline.createSVGPoint();
+    public getCursor(evt,svgQuery) {
+        var pt=svgQuery.createSVGPoint();
         pt.x=evt.clientX;
         pt.y=evt.clientY;
-        return pt.matrixTransform(this.svg_timeline.getScreenCTM().inverse());
+        return pt.matrixTransform(svgQuery.getScreenCTM().inverse());
     }
     public timeToDom()
     {
@@ -486,7 +395,6 @@ class Main
 
         }else if($('#playButton').hasClass('play')) {
 
-            // this.resetTime();
             this.isPlay = true;
 
             this.updateStartTime = new Date().getTime();
@@ -510,10 +418,6 @@ class Main
         this.audiolinetest.restart();
     }
 
-    public audioSetTimeAndPlay =()=>
-    {
-        this.audiolinetest.playOnSetTime((this.playTimeLine.x()*this.framePerPixel)/60);
-    }
 
     public audioReset =()=>
     {
@@ -535,10 +439,7 @@ class Main
 
     public pause=()=>
     {
-        // this.pauseTime = this.audioContext.currentTime;
-        // this.audioSouce.stop(0);
 
-        //クラスとテキスト変更
         this.isPlay = false;
         $('#playButton').addClass('play');
         $('#playButton').removeClass('pause');
@@ -566,28 +467,12 @@ class Main
 
 
 
-    public update = (time) =>
+    public update = (time?) =>
     {
 
-
-
         if(this.isPlay) {
-
-
-
             let dTime = (new Date().getTime() - this.updateStartTime)/1000;
-
-
-
             this.preSec = new Date().getSeconds();
-
-
-
-
-        // this.timeToDom();
-
-
-
             let mill = dTime - Math.floor(dTime);
             console.log("playingTIme: " + (dTime+this.playingTime)*60);
             let framenum = Math.floor(mill * 60);
@@ -639,16 +524,12 @@ class Main
                 if(this.audiolinetest.isTimelineStart) {
                     this.audioReset();
                 }
-                // this.audioReset();
+
             }
 
 
-
-
-
-
             let per = ((this.playingTime+dTime)*60) / this.durationFrameNums;
-            this.playTimeLine.move(this.timeline.width()*per,this.lineWidth/2);
+            this.playTimeLine.move(this.timeline.width*per,this.lineWidth/2);
 
         }
 
