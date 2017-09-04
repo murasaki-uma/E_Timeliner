@@ -39963,7 +39963,7 @@ var OscFragTimeLine = (function () {
                             width: 0
                         });
                         console.log(frag);
-                        var f = new __WEBPACK_IMPORTED_MODULE_1__OscFlag__["a" /* default */](frag, mousePosOnTimeline.x * framePerPixel, pixelPerFrame);
+                        var f = new __WEBPACK_IMPORTED_MODULE_1__OscFlag__["a" /* default */](frag, mousePosOnTimeline, pixelPerFrame, framePerPixel);
                         _this.oscFrags.push(f);
                     }
                     if (selectNum == 0) {
@@ -39981,7 +39981,7 @@ var OscFragTimeLine = (function () {
                             width: 0
                         });
                         console.log(frag);
-                        var f = new __WEBPACK_IMPORTED_MODULE_1__OscFlag__["a" /* default */](frag, mousePosOnTimeline.x * framePerPixel, pixelPerFrame);
+                        var f = new __WEBPACK_IMPORTED_MODULE_1__OscFlag__["a" /* default */](frag, mousePosOnTimeline, pixelPerFrame, framePerPixel);
                         _this.oscFrags.push(f);
                     }
                 }
@@ -74813,8 +74813,8 @@ module.exports = E;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(58);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
 
-var OscFlag = (function () {
-    function OscFlag(frag, time, pixelPerFrame) {
+var OscFrag = (function () {
+    function OscFrag(frag, mousePosOnTImeline, pixelPerFrame, framePerPixel) {
         var _this = this;
         this.values = { name: "value" };
         this.isSelected = false;
@@ -74822,6 +74822,8 @@ var OscFlag = (function () {
         this.time = 0;
         this.width = 4;
         this.pixelPerFrame = 0.1;
+        this.mousePosOnTimeline = { x: 0, y: 0 };
+        this.framePerPixel = 0;
         this.select = function () {
             console.log(_this.frag.id());
             _this.isSelected = true;
@@ -74838,20 +74840,22 @@ var OscFlag = (function () {
             _this.frag.stroke({ opacity: 0.0 });
         };
         this.frag = frag;
-        this.time = time;
+        this.mousePosOnTimeline = mousePosOnTImeline;
+        this.time = this.mousePosOnTimeline.x * framePerPixel;
+        this.framePerPixel = framePerPixel;
         this.pixelPerFrame = pixelPerFrame;
         this.width = this.sendingOscTime * this.pixelPerFrame;
         this.frag.width(this.width);
     }
-    OscFlag.prototype.setInputValues = function () {
+    OscFrag.prototype.setInputValues = function () {
         this.values = JSON.parse(__WEBPACK_IMPORTED_MODULE_0_jquery__(".inputFlagValue").val());
         this.sendingOscTime = Number(__WEBPACK_IMPORTED_MODULE_0_jquery__("#sendingFrames").val());
         this.width = this.sendingOscTime * this.pixelPerFrame;
         this.frag.width(this.width);
     };
-    return OscFlag;
+    return OscFrag;
 }());
-/* harmony default export */ __webpack_exports__["a"] = (OscFlag);
+/* harmony default export */ __webpack_exports__["a"] = (OscFrag);
 
 
 /***/ }),
@@ -74909,6 +74913,7 @@ var Main = (function () {
         this.isPointerDrag = false;
         this.moveStart = { x: 0, y: 0 };
         this.moveEnd = { x: 0, y: 0 };
+        this.dTime = 0;
         this.restart = function () {
             _this.updateStartTime = 0;
             _this.updateStopTime = 0;
@@ -75015,23 +75020,10 @@ var Main = (function () {
         };
         this.update = function (time) {
             if (_this.isPlay) {
-                var dTime = (new Date().getTime() - _this.updateStartTime) / 1000;
-                _this.preSec = new Date().getSeconds();
-                var mill = dTime - __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](dTime);
-                console.log("playingTIme: " + (dTime + _this.playingTime) * 60);
-                var framenum = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](mill * 60);
-                __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_f').text(framenum);
-                var _s = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((_this.playingTime + dTime) % 60);
-                __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_s').text(_s);
-                var _m = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((_this.playingTime + dTime) % 3600 / 60);
-                console.log(_m);
-                __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_m').text(_m);
-                var h = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((_this.playingTime + dTime) / 3600);
-                ;
-                __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_h').text(h);
-                _this.oscFragTimeLine.update(_this.playingTime, dTime);
-                _this.audiolinetest.update(_this.playingTime, dTime, _this.playTimeLine.x());
-                var per = ((_this.playingTime + dTime) * 60) / _this.durationFrameNums;
+                _this.updateDomTIme();
+                _this.oscFragTimeLine.update(_this.playingTime, _this.dTime);
+                _this.audiolinetest.update(_this.playingTime, _this.dTime, _this.playTimeLine.x());
+                var per = ((_this.playingTime + _this.dTime) * 60) / _this.durationFrameNums;
                 _this.playTimeLine.move(_this.timeline.width * per, _this.lineWidth / 2);
             }
             requestAnimationFrame(_this.update);
@@ -75103,6 +75095,22 @@ var Main = (function () {
         this.preMin = new Date().getMinutes();
         this.preSec = new Date().getSeconds();
         this.preFrame = 0;
+    };
+    Main.prototype.updateDomTIme = function () {
+        var date = new Date();
+        this.dTime = (date.getTime() - this.updateStartTime) / 1000;
+        this.preSec = date.getSeconds();
+        var mill = this.dTime - __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](this.dTime);
+        console.log("playingTIme: " + (this.dTime + this.playingTime) * 60);
+        var framenum = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"](mill * 60);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_f').text(framenum);
+        var _s = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((this.playingTime + this.dTime) % 60);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_s').text(_s);
+        var _m = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((this.playingTime + this.dTime) % 3600 / 60);
+        console.log(_m);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_m').text(_m);
+        var h = __WEBPACK_IMPORTED_MODULE_2_mathjs__["floor"]((this.playingTime + this.dTime) / 3600);
+        __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_h').text(h);
     };
     return Main;
 }());

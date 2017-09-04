@@ -1,6 +1,6 @@
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
-export default class OscFlag
+export default class OscFrag
 {
     public frag:SVG.Rect;
     public values:any = {name:"value"};
@@ -9,12 +9,18 @@ export default class OscFlag
     public time:number = 0;
     public width:number = 4;
     public pixelPerFrame:number = 0.1;
+    public mousePosOnTimeline:any = {x:0,y:0};
+    public framePerPixel:number = 0;
 
 
-    constructor(frag:SVG.Rect, time:number, pixelPerFrame:number)
+
+    constructor(frag:SVG.Rect, mousePosOnTImeline:{x,y}, pixelPerFrame:number,framePerPixel:number)
     {
         this.frag = frag;
-        this.time = time;
+        this.mousePosOnTimeline = mousePosOnTImeline;
+
+        this.time  = this.mousePosOnTimeline.x * framePerPixel;
+        this.framePerPixel = framePerPixel;
         this.pixelPerFrame = pixelPerFrame;
         this.width = this.sendingOscTime * this.pixelPerFrame;
         this.frag.width(this.width);

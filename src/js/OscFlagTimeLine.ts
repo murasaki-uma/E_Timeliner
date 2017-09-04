@@ -1,10 +1,10 @@
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
-import OscFlag from './OscFlag'
+import OscFrag from './OscFlag'
 import TimeLine from "./TimeLine";
 export default class OscFragTimeLine
 {
-    public oscFrags:OscFlag[] = [];
+    public oscFrags:OscFrag[] = [];
     public isReadyDoubleClick:boolean = false;
     public timeline:TimeLine;
     public lineWidth:number;
@@ -58,7 +58,7 @@ export default class OscFragTimeLine
                     });
 
                     console.log(frag);
-                    let f = new OscFlag(frag, mousePosOnTimeline.x * framePerPixel, pixelPerFrame);
+                    let f = new OscFrag(frag, mousePosOnTimeline, pixelPerFrame,framePerPixel);
                     this.oscFrags.push(f);
                 }
 
@@ -79,7 +79,7 @@ export default class OscFragTimeLine
                         width: 0
                     });
                     console.log(frag);
-                    let f = new OscFlag(frag, mousePosOnTimeline.x * framePerPixel, pixelPerFrame);
+                    let f = new OscFrag(frag, mousePosOnTimeline, pixelPerFrame,framePerPixel);
                     this.oscFrags.push(f);
                 }
 

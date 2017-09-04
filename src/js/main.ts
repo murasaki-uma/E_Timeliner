@@ -3,7 +3,7 @@ declare function require(x: string): any;
 import * as SVG from 'svg.js';
 import * as $ from "jquery";
 import * as Math from "mathjs";
-import OscFlag from './OscFlag';
+import OscFrag from './OscFlag';
 import TimeLine from './TimeLine';
 import AudioTimeLine from "./AudioTimeLine";
 
@@ -72,6 +72,8 @@ class Main
 
     public moveStart = {x:0,y:0};
     public moveEnd = {x:0,y:0};
+
+    public dTime:number = 0;
     constructor()
     {
         console.log("hello!");
@@ -358,37 +360,45 @@ class Main
 
 
 
+    public updateDomTIme()
+    {
+        let date = new Date();
+        this.dTime = (date.getTime() - this.updateStartTime)/1000;
+        this.preSec = date.getSeconds();
+        let mill = this.dTime - Math.floor(this.dTime);
+        console.log("playingTIme: " + (this.dTime+this.playingTime)*60);
+        let framenum = Math.floor(mill * 60);
+
+
+        $('.timeline_f').text(framenum);
+        let _s = Math.floor((this.playingTime+this.dTime)%60);
+        $('.timeline_s').text(_s);
+
+
+        let _m = Math.floor( (this.playingTime+this.dTime) % 3600 / 60 );
+        console.log(_m);
+        $('.timeline_m').text(_m);
+
+        let h = Math.floor( (this.playingTime+this.dTime) / 3600);
+        $('.timeline_h').text(h);
+    }
+
+
 
 
     public update = (time?) =>
     {
 
         if(this.isPlay) {
-            let dTime = (new Date().getTime() - this.updateStartTime)/1000;
-            this.preSec = new Date().getSeconds();
-            let mill = dTime - Math.floor(dTime);
-            console.log("playingTIme: " + (dTime+this.playingTime)*60);
-            let framenum = Math.floor(mill * 60);
 
 
-            $('.timeline_f').text(framenum);
-            let _s = Math.floor((this.playingTime+dTime)%60);
-            $('.timeline_s').text(_s);
+            this.updateDomTIme();
+            this.oscFragTimeLine.update(this.playingTime,this.dTime);
+
+            this.audiolinetest.update(this.playingTime,this.dTime,this.playTimeLine.x());
 
 
-            let _m = Math.floor( (this.playingTime+dTime) % 3600 / 60 );
-            console.log(_m);
-            $('.timeline_m').text(_m);
-
-            let h = Math.floor( (this.playingTime+dTime) / 3600);;
-            $('.timeline_h').text(h);
-
-            this.oscFragTimeLine.update(this.playingTime,dTime);
-
-           this.audiolinetest.update(this.playingTime,dTime,this.playTimeLine.x());
-
-
-            let per = ((this.playingTime+dTime)*60) / this.durationFrameNums;
+            let per = ((this.playingTime+this.dTime)*60) / this.durationFrameNums;
             this.playTimeLine.move(this.timeline.width*per,this.lineWidth/2);
 
         }
