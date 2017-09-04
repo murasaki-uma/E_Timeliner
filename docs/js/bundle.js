@@ -39900,6 +39900,21 @@ var AudioTimeLine = (function () {
         this.pausingTime = 0;
         this.pauseTime = 0;
     };
+    AudioTimeLine.prototype.update = function (playingTime, dTime, playTimeLine) {
+        if (this.delay <= (playingTime + dTime) * 60) {
+            console.log("audio play!!");
+            if (!this.isTimelineStart) {
+                // this.audioPlay();
+                this.play(playTimeLine * this.framePerPixel / 60);
+                this.isTimelineStart = true;
+            }
+        }
+        else {
+            if (this.isTimelineStart) {
+                this.reset();
+            }
+        }
+    };
     return AudioTimeLine;
 }());
 /* harmony default export */ __webpack_exports__["a"] = (AudioTimeLine);
@@ -75015,19 +75030,7 @@ var Main = (function () {
                 ;
                 __WEBPACK_IMPORTED_MODULE_1_jquery__('.timeline_h').text(h);
                 _this.oscFragTimeLine.update(_this.playingTime, dTime);
-                if (_this.audiolinetest.delay <= (_this.playingTime + dTime) * 60) {
-                    console.log("audio play!!");
-                    if (!_this.audiolinetest.isTimelineStart) {
-                        // this.audioPlay();
-                        _this.audioPlay();
-                        _this.audiolinetest.isTimelineStart = true;
-                    }
-                }
-                else {
-                    if (_this.audiolinetest.isTimelineStart) {
-                        _this.audioReset();
-                    }
-                }
+                _this.audiolinetest.update(_this.playingTime, dTime, _this.playTimeLine.x());
                 var per = ((_this.playingTime + dTime) * 60) / _this.durationFrameNums;
                 _this.playTimeLine.move(_this.timeline.width * per, _this.lineWidth / 2);
             }

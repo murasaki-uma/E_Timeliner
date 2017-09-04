@@ -245,4 +245,25 @@ export default class AudioTimeLine {
         }
     }
 
+    public update(playingTime:number,dTime:number,playTimeLine:number)
+    {
+        if(this.delay <= (playingTime+dTime)*60)
+        {
+            console.log("audio play!!");
+            if(!this.isTimelineStart)
+            {
+
+                // this.audioPlay();
+                this.play(playTimeLine * this.framePerPixel/60);
+                this.isTimelineStart = true;
+            }
+
+        } else {
+            if(this.isTimelineStart) {
+                this.reset();
+            }
+
+        }
+    }
+
 }

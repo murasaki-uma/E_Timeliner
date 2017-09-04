@@ -385,23 +385,7 @@ class Main
 
             this.oscFragTimeLine.update(this.playingTime,dTime);
 
-            if(this.audiolinetest.delay <= (this.playingTime+dTime)*60)
-            {
-                console.log("audio play!!");
-                if(!this.audiolinetest.isTimelineStart)
-                {
-
-                    // this.audioPlay();
-                    this.audioPlay();
-                    this.audiolinetest.isTimelineStart = true;
-                }
-
-            } else {
-                if(this.audiolinetest.isTimelineStart) {
-                    this.audioReset();
-                }
-
-            }
+           this.audiolinetest.update(this.playingTime,dTime,this.playTimeLine.x());
 
 
             let per = ((this.playingTime+dTime)*60) / this.durationFrameNums;
